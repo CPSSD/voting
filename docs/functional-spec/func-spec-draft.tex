@@ -66,6 +66,12 @@ The main scenario in which the system is intended to be used is any large scale 
 \subsubsection{User casts a vote which is valid}
 A user selects candidate A on their electronic ballot. They verify that their selection was correctly registered and cast the vote. Their vote is then verified by peers on the network and added to the ledger.
 
+\subsubsection{User ranks 3 out of 5 options on their ballot}
+A user selects candidate options A, D and E on their ballot. They choose not to rank the last two options B or C. Their vote is verified, and added to the ledger.
+
+\subsubsection{User selects no options on their ballot}
+A user chooses not to select an option on their ballot. This is represented as selecting a "None of the above" option for the purposes of the vote.
+
 \subsubsection{User spoils their ballot by selecting wrong options}
 The user selects both candidate A and B on their electronic ballot. The system will not allow an incorrect selection such as this, and alerts the user to the error. The user then starts the process from the start.
 
@@ -86,11 +92,11 @@ Here is format of a secure vote.
 Here is info on the blockchain
 \subsection{Requirement 1}
 Here is some other requirement
-\subsubsection{Description}
-\subsubsection{Criticality}
-\subsubsection{Technical issues}
-\subsubsection{Dependecies on other requirements}
-\subsubsection{Others}
+\subsubsection*{Description}
+\subsubsection*{Criticality}
+\subsubsection*{Technical issues}
+\subsubsection*{Dependecies on other requirements}
+\subsubsection*{Others}
 
 \section{System Architecture}
 \section{High Level Design}
