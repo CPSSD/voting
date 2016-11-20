@@ -14,7 +14,7 @@
 
 \newcommand{\proj}{AnonEvote}
 
-\title{\proj\\A Project on Blockchain Evoting\\Functional Specification}
+\title{\proj{}\\A Project on Blockchain Evoting\\Functional Specification}
 \author{Michael Wall}
 \date{\today}
 
@@ -32,7 +32,7 @@
 \section{Introduction}
 This document describes an implementation of an electronic voting system which utilises a blockchain\footnote{A blockchain is a distributed database which maintains a growing ledger of records called blocks. Each block is timestamped and linked to the previous block to create the chain. The data in a block cannot be altered without breaking the chain} database. The system is used to allow a user to electronically cast a vote in an anonymous, verifiable and tamper-proof manner. Votes are ecnrypted and cast over a peer-to-peer network. The final votes can be counted and verified by any user, but no users' votes can be traced back to a voter.
 
-The need for this system arises from the lack of a secure, trustless, tamper-proof and anonymous electronic voting system. Paper ballots are slower, and more expensive to conduct (work hours to organise polling stations, tallying votes, re-counts of votes, multiple voting options, errors filling out a ballot, etc). The \proj system aims to tackle some of these issues.
+The need for this system arises from the lack of a secure, trustless, tamper-proof and anonymous electronic voting system. Paper ballots are slower, and more expensive to conduct (work hours to organise polling stations, tallying votes, re-counts of votes, multiple voting options, errors filling out a ballot, etc). The \proj{} system aims to tackle some of these issues.
 
 \begin{description}
 
@@ -49,7 +49,7 @@ The need for this system arises from the lack of a secure, trustless, tamper-pro
 
 \section{General Description}
 \subsection{Product/System Functions}
-The \proj system is designed to enable electronic voting to be carried out securely, tamper-proof and anonymously. A user of the system will cast a vote electronically through some user interface. The user's vote is then encrypted to form a \textit{secured vote}. The user can verify that their vote is what they intended by decrypting it. This will spoil the ballot, but after repeated casting and decrypting the user can be sure that their vote is accurate. When the user is happy with their ballot, it is then broadcast to all of the client's peers to be verified. The verification of the transaction requires a proof of work to be a valid block. This proof of work entails some computationally expensive task. When the proof of work is complete, the block is then broadcast to a client's peers. If there is disagreement between a new block, consensus is used to select the correct version which is then broadcast to all peers.
+The \proj{} system is designed to enable electronic voting to be carried out securely, tamper-proof and anonymously. A user of the system will cast a vote electronically through some user interface. The user's vote is then encrypted to form a \textit{secured vote}. The user can verify that their vote is what they intended by decrypting it. This will spoil the ballot, but after repeated casting and decrypting the user can be sure that their vote is accurate. When the user is happy with their ballot, it is then broadcast to all of the client's peers to be verified. The verification of the transaction requires a proof of work to be a valid block. This proof of work entails some computationally expensive task. When the proof of work is complete, the block is then broadcast to a client's peers. If there is disagreement between a new block, consensus is used to select the correct version which is then broadcast to all peers.
 
 To verify their vote, a user can look at the blockchain and verify that their receipt exists on the chain. Homomorphic encryption of votes allows them to be tallied without decrypting individual votes. Any user will be able to perform the computation to tally the votes.
 
@@ -78,25 +78,146 @@ The user selects both candidate A and B on their electronic ballot. The system w
 \subsection{Constraints}
 Different voting systems\footnote{A voting system consists of the set of rules which must be followed for a vote to be valid, and defines how otes are cast, counted and aggregated to yield the final result. Examples include a plurality, majority representation and many other variations.} have different requirements.
 
-In the simplest case a voting system in which a voter selects a single option from two or more choices, and the option with the most votes wins. Other systems are more complicated and require more complicated computation to achieve a result.
+In the simplest case a voting system in which a voter selects a single option from two or more choices, and the option with the most votes wins. Other systems are more complicated and require more complicated comutation to achieve a result.
 
 Such systems include weighted voting systems, proportional, semi-proportional, rated and multiple winner systems. Such systems pose challenges as the votes may not be very easily calculated as with a simple tally.
 
-Each voting system would require its own rules to specified for the vote to be successful. For this reason the \proj system will focus on two systems as a proof of concept, with the ability to add more systems. The two systems will be \textit{Proportional Reprisentation with a Single Transferable Vote}\footnote{The PR-STV system is used in Ireland.} and \textit{Party List Proportional Representation}\footnote{The Party List PR system is used in 85 countries}.
+Each voting system would require its own rules to specified for the vote to be successful. For this reason the \proj{} system will focus on two systems as a proof of concept, with the ability to add more systems. The two systems will be \textit{Proportional Reprisentation with a Single Transferable Vote}\footnote{The PR-STV system is used in Ireland.} and \textit{Party List Proportional Representation}\footnote{The Party List PR system is used in 85 countries}.
+
 \section{Functional Requirements}
+
 \subsection{Secure Votes}
 \label{subsec:securevote}
-Here is format of a secure vote.
+
+\subsubsection{User can access the system}
+\begin{description}
+	\item[Description]
+		A user should be able to securely access the system and be verified to cast their vote. The no user should be able to masquerade as another user to cast their vote.
+	\item[Criticality]
+		Low
+	\item[Technical issues]
+		It is a challenge to authenticate a single user, as the method of registering for the system must ensure that each citizen can only have one account, and that no other citizen can use another's account. It is expected that this authentication of users will be managed by a third party who wishes to implement this system.
+	\item[Dependencies on other requirements] 
+		None.
+\end{description}
+
+\subsubsection{User can make selections on their ballot}
+\begin{description}
+	\item[Description]
+		A user should be able to input the appropriate options on their ballot, including multiple selections, scorings, abstaining from selections etc.
+	\item[Criticality] 
+		High
+	\item[Technical issues] 
+		A certain type of vote may require text input, in which case the user could enter an error or mispelling into the system.
+	\item[Dependencies on other requirements]
+		This is dependent on \ref{sssec:vote-sys-rep}
+\end{description}
+
+\subsubsection{User can verify their ballot is as intended}
+\begin{description}
+	\item[Description]
+		A user should be able to verify that their input ballot is encrypted as intended. This may invlove decrypting their transaction before it is broadcast to the network in order to verify that it represents their intended ballot. This will invalidate this particular encryption of the ballot. The user should be able to perform this a number of times until they are sufficiently sure that the system is correctly representing their vote.
+	\item[Criticality]
+		High
+	\item[Technical issues]
+		It may be an issue that once a transaction is decrypted, the network should know that it is invalid and so not accept it into the ledger.
+	\item[Dependencies on other requirements]
+		This is dependent on \ref{sssec:ballot-enc-trans} 
+\end{description}
+
+\subsubsection{The ballot can be encrypted and formed into a transaction}
+\label{sssec:ballot-enc-trans}
+\begin{description}
+	\item[Description]
+		A ballot should be represented in some agreed format, and encrypted so as the contents of the ballot are protected, and that no user can have their vote identified.
+	\item[Criticality]
+		High
+	\item[Technical issues]
+		It is a huge issue to ensure that a user cannot link their vote to their identity, as this enables the sale of votes. The result of the vote should be calculatable, while also not revealing information about the voter. 
+	\item[Dependencies on other requirements]
+		This is dependent on \ref{sssec:vote-sys-calc} and \ref{sssec:vote-sys-view}.
+\end{description}
+
 \subsection{Blockchain}
 \label{subsec:blockchain}
-Here is info on the blockchain
-\subsection{Requirement 1}
-Here is some other requirement
-\subsubsection*{Description}
-\subsubsection*{Criticality}
-\subsubsection*{Technical issues}
-\subsubsection*{Dependecies on other requirements}
-\subsubsection*{Others}
+
+\subsubsection{A client node can broadcast to its peers}
+\label{sssec:blk-comms}
+\begin{description}
+	\item[Description]
+		A peer-to-peer network will be required to enable a node to broadcast transactions, blocks and other necessary information to other nodes involved in maintaining the system.
+	\item[Criticality]
+		High
+	\item[Technical issues]
+		Node discovery on the peer-to-peer network may be problematic without the use of a peer discovery server or installed lists of peers to begin seeding the network.
+	\item[Dependencies on other requirements]
+		None.
+\end{description}
+
+\subsubsection{A node can verify a transaction and create a block}
+\begin{description}
+	\item[Description]
+		A node should perform some cryptographic operation which is computationally expensive, like a proof of work, in order to verify a transaction and create a block for the network.
+	\item[Criticality]
+		High
+	\item[Technical issues]
+		Selecting a proof of work of sufficient difficulty without being too expensive. If a transaction can be verified instantaneously, it becomes easier to hack the system. If it takes too long to verify, then the user could have to wait an inconvenient amount of time before their vote is successfuly added to the system.
+	\item[Dependencies on other requirements]
+		None.
+\end{description}
+
+\subsubsection{Nodes can add new blocks to the chain using a consensus}
+\begin{description}
+	\item[Description]
+		Nodes should be able to agree on the correct version of the voting history using consensus. This would mean to hack the system an attacker would need to be in control of 51% of the nodes in the network. This is not feasible in a large scaling system.
+	\item[Criticality]
+		High
+	\item[Technical issues]
+		This may be a generally difficult task to complete across a network of peers where fully operational communications are not guaranteed, and not all peers are guaranteed to be connected at all times.
+	\item[Dependencies on other requirements]
+		This is dependent on \ref{sssec:blk-comms}.
+\end{description}
+
+\subsection{Voting System}
+
+\subsubsection{A particular voting system can be implemented}
+\label{sssec:vote-sys-rep}
+\begin{description}
+	\item[Description]
+		Ideally, the style of voting sytem used should be independent from the blockchain implementation, meaning the system can be used in different regions which require different rules and regulations. However, the system will be required to work on at least one system as a proof of concept.
+	\item[Criticality]
+		High
+	\item[Technical issues]
+		If homomorphic encryption is to be used to tally votes, this may not work in some voting systems which are not a simple count, but have weighting towards votes and different criteria for an outcome to be determined.
+	\item[Dependencies on other requirements]
+		This is dependent on \ref{sssec:vote-sys-calc} and \ref{sssec:ballot-enc-trans}. 
+\end{description}
+
+\subsubsection{The ledger can be processed to obtain a vote's result}
+\label{sssec:vote-sys-calc}
+\begin{description}
+	\item[Description]
+		The sytem should be implemented in such a way as to allow the result of the vote to be calculated without compromising voter identities or linking votes to voters.
+	\item[Criticality]
+		High
+	\item[Technical issues]
+		This faces very similar issues as mentioned in \ref{sssec:vote-sys-rep}.
+	\item[Dependencies on other requirements]
+		This is dependent on \ref{sssec:vote-sys-rep} and \ref{sssec:ballot-enc-trans}.
+\end{description}
+
+\subsubsection{A user can see their vote in the ledger}
+\label{sssec:vote-sys-view}
+\begin{description}
+	\item[Description]
+		A user should be able to see that their ballot has been added to the ledger correctly. They should be able to do this without identifying it as their vote and without revealing the contents of the vote.
+	\item[Criticality]
+		Medium
+	\item[Technical issues]
+		A user should not be able to identify the contents of their ballot so as to avoid the selling of votes.
+	\item[Dependencies on other requirements]
+		None.
+\end{description}
 
 \section{System Architecture}
 \section{High Level Design}
