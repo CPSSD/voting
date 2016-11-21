@@ -4,6 +4,7 @@
 \geometry{a4paper}
 
 \usepackage{graphicx}
+\usepackage{svg}
 \usepackage{amssymb}
 \usepackage{epstopdf}
 \usepackage{endnotes}
@@ -239,10 +240,33 @@ Each voting system would require its own rules to specified for the vote to be s
 \end{description}
 
 \section{System Architecture}
-\section{High Level Design}
-\section{Preliminary Schedule}
-\section{Appendices}
+Please see Figure \ref{fig:system-architecture} on page \pageref{fig:system-architecture} for the diagram. The system architecture consists of a network of nodes, all of which run the client software. Nodes are connected to form a peer-to-peer network.
 
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\textwidth]{SystemArchitecture.eps}
+\caption{The system consists of a peer to peer network of nodes, all of which are running the client software. The user interacts with the system through a node running the client software.}
+\label{fig:system-architecture}
+\end{figure}
+
+\section{High Level Design}
+Please see Figure \ref{fig:high-level-design} on page \pageref{fig:high-level-design} for the diagram. A user will interact with the system to perform completion of their ballot. The client node will independently carry out peer discovery. It is not required that a node communicate with specific peers on the network. A node will perform encryption of a ballot and broadcasting of transactions for its user. It will also perform transaction verification, consensus agreements, and chain updating in collaboration with other peers on the network. Any node can perform these functions if they are running the client software.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\textwidth]{HighLevelDesign.eps}
+\caption{This diagram shows the high level design of the system. The image depicts the functions which a client node must perform. A user of the system will interact with ballot completion. A node can communicate with any of its peers for successful operation.}
+\label{fig:high-level-design}
+\end{figure}
+
+\section{Development schedule}
+My project will not consist of a traditional schedule which has a large block of time for research, then development and then testing or polishing of the project. I will instead be using an agile approach for development.
+
+I will be working with a sprint duration of two weeks, enabling sufficient time for research and development of selected tasks, while also ensuring that any necessary feedback can be provided between sprints. Any issues that arise during a sprint can be dealt with before progressing further with the project.
+
+Tasks for any given sprint will be selected from the project backlog at the beginning of the sprint. Any new issues will be added to the backlog as the project progresses. Any tasks which require grooming will be expanded into more specific sub tasks which are suitable for development in a sprint.
+
+I will be using a private repository on GitHub to manage my code, and will push changes to my GitLab repository frequently. I will use \textit{Waffle.io} to manage the project backlog and to track issues. This system will be integrated with the GitHub repository. I will use a Travis server to perform continuous integration testing where applicable.
 
 \newpage
 \theendnotes
