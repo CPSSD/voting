@@ -15,7 +15,7 @@
 \newcommand{\proj}{AnonEvote}
 
 \title{\proj{}\\A Project on Blockchain Evoting\\Functional Specification}
-\author{Michael Wall}
+\author{Michael Wall\\13522003}
 \date{\today}
 
 \begin{document}
@@ -38,7 +38,7 @@ The need for this system arises from the lack of a secure, trustless, tamper-pro
 
 	\item[Blockchain]
 		The blockchain is the database which maintains the \textit{ledger} of \textit{votes}. It is distributed amongst all participants in the system via peer-to-peer networking. Each client will maintain an up-to-date version of the \textit{ledger} to the best of their knowledge. The blockchain is described further in section \S\ref{subsec:blockchain} on page \pageref{subsec:blockchain}.
-	
+
 	\item[Ledger]
 		The \textit{ledger} is a growing record of each \textit{vote} which has been cast. It is publicly viewable.
 
@@ -76,11 +76,18 @@ A user chooses not to select an option on their ballot. This is represented as s
 The user selects both candidate A and B on their electronic ballot. The system will not allow an incorrect selection such as this, and alerts the user to the error. The user then starts the process from the start.
 
 \subsection{Constraints}
-Different voting systems\footnote{A voting system consists of the set of rules which must be followed for a vote to be valid, and defines how otes are cast, counted and aggregated to yield the final result. Examples include a plurality, majority representation and many other variations.} have different requirements.
+\label{ssec:constraints}
+A voting system in general needs a few things to make it fair. A prime factor of a successful voting system is that a voter should not be able to sell their vote. For this requirement to be met, a user should have no way of proving what way they filled out their ballot to the outside world. This also means that the ballot itself should have no way of identifying who filled it out.
+
+Ballots should also not be tamperable. This is why some voting systems use pencil instead of pens, to ensure that no erasing ink could be used to invalidate a voter's ballot.
+
+Different voting systems\footnote{A voting system consists of the set of rules which must be followed for a vote to be valid, and defines how otes are cast, counted and aggregated to yield the final result. Examples include a plurality, majority representation and many other variations.} also have different requirements.
 
 In the simplest case a voting system in which a voter selects a single option from two or more choices, and the option with the most votes wins. Other systems are more complicated and require more complicated comutation to achieve a result.
 
 Such systems include weighted voting systems, proportional, semi-proportional, rated and multiple winner systems. Such systems pose challenges as the votes may not be very easily calculated as with a simple tally.
+
+Some voting systems also require the polling statistics to be kept a secret until the end of the vote. This could prevent early predictions from causing a swing in the vote due to people believing that a particular candidate has already won.
 
 Each voting system would require its own rules to specified for the vote to be successful. For this reason the \proj{} system will focus on two systems as a proof of concept, with the ability to add more systems. The two systems will be \textit{Proportional Reprisentation with a Single Transferable Vote}\footnote{The PR-STV system is used in Ireland.} and \textit{Party List Proportional Representation}\footnote{The Party List PR system is used in 85 countries}.
 
@@ -97,7 +104,7 @@ Each voting system would require its own rules to specified for the vote to be s
 		Low
 	\item[Technical issues]
 		It is a challenge to authenticate a single user, as the method of registering for the system must ensure that each citizen can only have one account, and that no other citizen can use another's account. It is expected that this authentication of users will be managed by a third party who wishes to implement this system.
-	\item[Dependencies on other requirements] 
+	\item[Dependencies on other requirements]
 		None.
 \end{description}
 
@@ -105,12 +112,12 @@ Each voting system would require its own rules to specified for the vote to be s
 \begin{description}
 	\item[Description]
 		A user should be able to input the appropriate options on their ballot, including multiple selections, scorings, abstaining from selections etc.
-	\item[Criticality] 
+	\item[Criticality]
 		High
-	\item[Technical issues] 
+	\item[Technical issues]
 		A certain type of vote may require text input, in which case the user could enter an error or mispelling into the system.
 	\item[Dependencies on other requirements]
-		This is dependent on \ref{sssec:vote-sys-rep}
+		This is dependent on \ref{sssec:vote-sys-rep}.
 \end{description}
 
 \subsubsection{User can verify their ballot is as intended}
@@ -122,7 +129,19 @@ Each voting system would require its own rules to specified for the vote to be s
 	\item[Technical issues]
 		It may be an issue that once a transaction is decrypted, the network should know that it is invalid and so not accept it into the ledger.
 	\item[Dependencies on other requirements]
-		This is dependent on \ref{sssec:ballot-enc-trans} 
+		This is dependent on \ref{sssec:ballot-enc-trans}.
+\end{description}
+
+\subsubsection{A user cannot reveal the contents of their ballot to the outside world}
+\begin{description}
+	\item[Description]
+		In order to satisfy the constraints described in \ref{ssec:constraints}, a user should not be able to reveal what way they filled out their ballot to the outside world.
+	\item[Criticality]
+		High
+	\item[Technical issues]
+		The votes must be countable without a user being able to identify the vote as their own.
+	\item[Dependencies on other requirements]
+		This is dependent on \ref{sssec:ballot-enc-trans}.
 \end{description}
 
 \subsubsection{The ballot can be encrypted and formed into a transaction}
@@ -133,7 +152,7 @@ Each voting system would require its own rules to specified for the vote to be s
 	\item[Criticality]
 		High
 	\item[Technical issues]
-		It is a huge issue to ensure that a user cannot link their vote to their identity, as this enables the sale of votes. The result of the vote should be calculatable, while also not revealing information about the voter. 
+		It is a huge issue to ensure that a user cannot link their vote to their identity, as this enables the sale of votes. The result of the vote should be calculatable, while also not revealing information about the voter.
 	\item[Dependencies on other requirements]
 		This is dependent on \ref{sssec:vote-sys-calc} and \ref{sssec:vote-sys-view}.
 \end{description}
@@ -169,7 +188,7 @@ Each voting system would require its own rules to specified for the vote to be s
 \subsubsection{Nodes can add new blocks to the chain using a consensus}
 \begin{description}
 	\item[Description]
-		Nodes should be able to agree on the correct version of the voting history using consensus. This would mean to hack the system an attacker would need to be in control of 51% of the nodes in the network. This is not feasible in a large scaling system.
+		Nodes should be able to agree on the correct version of the voting history using consensus. This would mean to hack the system an attacker would need to be in control of 51\% of the nodes in the network. This is not feasible in a large scaling system.
 	\item[Criticality]
 		High
 	\item[Technical issues]
@@ -190,7 +209,7 @@ Each voting system would require its own rules to specified for the vote to be s
 	\item[Technical issues]
 		If homomorphic encryption is to be used to tally votes, this may not work in some voting systems which are not a simple count, but have weighting towards votes and different criteria for an outcome to be determined.
 	\item[Dependencies on other requirements]
-		This is dependent on \ref{sssec:vote-sys-calc} and \ref{sssec:ballot-enc-trans}. 
+		This is dependent on \ref{sssec:vote-sys-calc} and \ref{sssec:ballot-enc-trans}.
 \end{description}
 
 \subsubsection{The ledger can be processed to obtain a vote's result}
