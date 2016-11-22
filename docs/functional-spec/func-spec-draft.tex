@@ -60,7 +60,7 @@ The need for this system arises from the lack of a secure, trustless, tamper-pro
 \section{General Description}
 \subsection{Product/System Functions}
 
-The \proj{} system is designed to enable electronic voting to tamper-proof, anonymous and to be carried out securely. A user of the system will cast a \textit{ballot} electronically through some user interface. The user's \textit{ballot} is then encrypted to form a secure \textit{transaction}. The user can verify that their \textit{ballot} is as they intended by decrypting it. This will spoil and invalidate the \textit{ballot}, but after repeated casting and decrypting the user's certainty in the system can be assured\footnote{A user can never be 100\% certain that their vote is as intended without spoiling their ballot. The probability that their ballot has been tampered with is denoted by \[P(t) = (1/2)^n\] where \[t\] is the event in which a ballot has been tampered with and \[n\] is the number of times a user decrypts their vote to check it. After only 7 encryptions and decryptions, the user can be sure with a greater than 99\% probability that their ballot has not been tampered with.}. When the user is happy with their \textit{ballot}, the \textit{transaction} is then broadcast to all of the client's peers to be verified. The veriInfication of the \textit{transaction} requires a proof of work to be completed by the peers. This proof of work entails some computationally expensive task. When the proof of work is complete, the \textit{block} is then broadcast to a client's peers. If there is disagreement between a new \textit{block}, consensus is used to select the correct version which is then broadcast to all peers.
+The \proj{} system is designed to enable electronic voting to tamper-proof, anonymous and to be carried out securely. A user of the system will cast a \textit{ballot} electronically through some user interface. The user's \textit{ballot} is then encrypted to form a secure \textit{transaction}. The user can verify that their \textit{ballot} is as they intended by decrypting it. This will spoil and invalidate the \textit{ballot}, but after repeated casting and decrypting the user's certainty in the system can be assured\footnote{A user can never be 100\% certain that their vote is as intended without spoiling their ballot. The probability that their ballot has been tampered with is denoted by \[P(t) = (1/2)^n\] where $t$ is the event in which a ballot has been tampered with and $n$ is the number of times a user decrypts their vote to check it. After only 7 encryption and decryption cycles, the user can be sure with a greater than 99\% probability that their ballot has not been tampered with.}. When the user is happy with their \textit{ballot}, the \textit{transaction} is then broadcast to all of the client's peers to be verified. The veriInfication of the \textit{transaction} requires a proof of work to be completed by the peers. This proof of work entails some computationally expensive task. When the proof of work is complete, the \textit{block} is then broadcast to a client's peers. If there is disagreement between a new \textit{block}, consensus is used to select the correct version which is then broadcast to all peers.
 To verify their vote, a user can look at the blockchain and verify that their receipt exists on the chain. Homomorphic encryption\footnote{Homomorphic encryption allows computations to be carried out on ciphertext, without the need to reveal the value of the plaintext. This creates an encrypted result which, when decrypted, matches the result of the same operations being performed on the plaintext.} of votes allows them to be tallied without decrypting individual votes. Any user should be able to perform the computation to tally the votes.
 
 \subsection{User Characteristics}
@@ -286,15 +286,36 @@ Please see Figure \ref{fig:high-level-design} on page \pageref{fig:high-level-de
 \label{fig:high-level-design}
 \end{figure}
 
-\section{Development schedule}
+\section{Development cycle}
 My project will not consist of a traditional schedule which has a large block of time for research, then development and then testing or polishing of the project. I will instead be using an agile approach for development.
 
 I will be working with a sprint duration of two weeks, enabling sufficient time for research and development of selected tasks, while also ensuring that any necessary feedback can be provided between sprints. Any issues that arise during a sprint can be dealt with before progressing further with the project.
 
-Tasks for any given sprint will be selected from the project backlog at the beginning of the sprint. Any new issues will be added to the backlog as the project progresses. Any tasks which require grooming will be expanded into more specific sub tasks which are suitable for development in a sprint.
+Tasks for any given sprint will be selected from the project backlog at the beginning of the sprint. Any new issues will be added to the backlog as the project progresses. Any tasks which require grooming will be expanded into more specific sub tasks which are suitable for development in a sprint. The current project backlog can be seen at \S\ref{sec:backlog}
 
 I will be using a private repository on GitHub to manage my code, and will push changes to my GitLab repository frequently. I will use \textit{Waffle.io} to manage the project backlog and to track issues. This system will be integrated with the GitHub repository. I will use a Travis server to perform continuous integration testing where applicable.
 
+\section{Preliminary project backlog}
+\label{sec:backlog}
+
+The current project backlog is as follows:
+\begin{itemize}
+    \item Set up Slack hooks to GitHub, Travis, Waffle
+    \item Set up Travis CI
+    \item A user should be able to fill out a given ballot
+    \item Implement ballot form generation
+    \item Research consensus forming algorithms
+    \item Research blockchain structure
+    \item Research sharded public/private key generation
+    \item Research Party List PR voting system
+    \item Research PR-STV voting system
+    \item Research proof of work options
+    \item Research peer to peer network discovery options
+    \item Research peer to peer networking
+    \item Research alternative encryption schemes
+    \item Research homomorphic encryption schemes
+    \item Complete functional specification deliverable
+\end{itemize}
 \newpage
 \theendnotes
 \end{document}
