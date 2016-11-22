@@ -37,11 +37,11 @@ The need for this system arises from the lack of a secure, trustless, tamper-pro
 
 \begin{description}
 
-    \item[Peer-to-peer network (P2P)]
-        A peer-to-peer network is a distributed networking architecture in which peer nodes are equal and can act as both a "client" and a "server" for other nodes on the network. It eliminates the need for a centralized server. We will refer to the peer-to-peer network as a P2P network from here on.
+    \item[Peer-to-peer network \texttt{(P2P)}]
+        A peer-to-peer network is a distributed networking architecture in which peer nodes are equal and can act as both a "client" and a "server" for other nodes on the network. It eliminates the need for a centralized server. We will refer to the peer-to-peer network as a \texttt{P2P} network from here on.
 
 	\item[Blockchain]
-		The blockchain is the distributed database which maintains the \textit{ledger} of \textit{ballots}. It is broadcast to all participants in the system via the P2P network. Each client will maintain an up-to-date version of the \textit{ledger} to the best of their knowledge. The requirements for the blockchain are described further in section \S\ref{subsec:blockchain} on page \pageref{subsec:blockchain}.
+		The blockchain is the distributed database which maintains the \textit{ledger} of \textit{ballots}. It is broadcast to all participants in the system via the \texttt{P2P} network. Each client will maintain an up-to-date version of the \textit{ledger} to the best of their knowledge. The requirements for the blockchain are described further in section \S\ref{subsec:blockchain} on page \pageref{subsec:blockchain}.
 
 	\item[Ledger]
 		The \textit{ledger} is a growing record of all \textit{ballots} which have been cast. The ledger is comprised of a series of \textit{blocks}, each block referring to the previous block to form a chain.
@@ -133,44 +133,44 @@ Each voting system would require its own rules to specified for the vote to be s
 	\item[Technical issues]
 		A certain type of vote may require text input, in which case the user could enter an error or mispelling into the system.
 	\item[Dependencies on other requirements]
-		This is dependent on \ref{sssec:vote-sys-rep}.
+		This is dependent on \S\ref{sssec:vote-sys-rep}.
 \end{description}
 
 \subsubsection{User can verify their ballot is as intended}
 \begin{description}
 	\item[Description]
-		A user should be able to verify that their input ballot is encrypted as intended. This may invlove decrypting their transaction before it is broadcast to the network in order to verify that it represents their intended ballot. This will invalidate this particular encryption of the ballot. The user should be able to perform this a number of times until they are sufficiently sure that the system is correctly representing their vote.
+		A user should be able to verify that their input ballot is encrypted as intended. This may invlove decrypting their transaction before it is broadcast to the network in order to verify that it represents their intended ballot. This will invalidate that particular encryption of the ballot. The user should be able to perform this a number of times until they are assured that the system is correctly representing their ballot.
 	\item[Criticality]
 		High
 	\item[Technical issues]
-		It may be an issue that once a transaction is decrypted, the network should know that it is invalid and so not accept it into the ledger.
+		It may be an issue that once a transaction is decrypted, the rest of the network may not know that it is invalid and not to accept it into the ledger.
 	\item[Dependencies on other requirements]
-		This is dependent on \ref{sssec:ballot-enc-trans}.
+		This is dependent on \S\ref{sssec:ballot-enc-trans}.
 \end{description}
 
 \subsubsection{A user cannot reveal the contents of their ballot to the outside world}
 \begin{description}
 	\item[Description]
-		In order to satisfy the constraints described in \ref{ssec:constraints}, a user should not be able to reveal what way they filled out their ballot to the outside world.
+		In order to satisfy the constraints described in \S\ref{ssec:constraints}, a user should not be able to provably reveal to the outside world how they filled out their ballot.
 	\item[Criticality]
 		High
 	\item[Technical issues]
-		The votes must be countable without a user being able to identify the vote as their own.
+		The votes must be countable without a user being able to identify the contents of the ballot as their own.
 	\item[Dependencies on other requirements]
-		This is dependent on \ref{sssec:ballot-enc-trans}.
+		This is dependent on \S\ref{sssec:ballot-enc-trans}.
 \end{description}
 
 \subsubsection{The ballot can be encrypted and formed into a transaction}
 \label{sssec:ballot-enc-trans}
 \begin{description}
 	\item[Description]
-		A ballot should be represented in some agreed format, and encrypted so as the contents of the ballot are protected, and that no user can have their vote identified.
+		A ballot should be represented in some agreed format, and encrypted to form a transaction so that the contents of the ballot are protected, and that no user can have their vote identified.
 	\item[Criticality]
 		High
 	\item[Technical issues]
 		It is a huge issue to ensure that a user cannot link their vote to their identity, as this enables the sale of votes. The result of the vote should be calculatable, while also not revealing information about the voter.
 	\item[Dependencies on other requirements]
-		This is dependent on \ref{sssec:vote-sys-calc} and \ref{sssec:vote-sys-view}.
+		This is dependent on \S\ref{sssec:vote-sys-calc} and \S\ref{sssec:vote-sys-view}.
 \end{description}
 
 \subsection{Blockchain}
@@ -180,11 +180,11 @@ Each voting system would require its own rules to specified for the vote to be s
 \label{sssec:blk-comms}
 \begin{description}
 	\item[Description]
-		A peer-to-peer network will be required to enable a node to broadcast transactions, blocks and other necessary information to other nodes involved in maintaining the system.
+		A \texttt{P2P} network will be required to enable a node to broadcast transactions, blocks and other necessary information to other nodes involved in maintaining the system.
 	\item[Criticality]
 		High
 	\item[Technical issues]
-		Node discovery on the peer-to-peer network may be problematic without the use of a peer discovery server or installed lists of peers to begin seeding the network.
+		Node discovery on the \texttt{P2P} network may be problematic without the use of a peer discovery server or installed lists of peers to begin seeding the network.
 	\item[Dependencies on other requirements]
 		None.
 \end{description}
@@ -201,7 +201,7 @@ Each voting system would require its own rules to specified for the vote to be s
 		None.
 \end{description}
 
-\subsubsection{Nodes can add new blocks to the chain using a consensus}
+\subsubsection{Nodes can add new blocks to the chain using a consensus algorithm}
 \begin{description}
 	\item[Description]
 		Nodes should be able to agree on the correct version of the voting history using consensus. This would mean to hack the system an attacker would need to be in control of 51\% of the nodes in the network. This is not feasible in a large scaling system.
@@ -210,7 +210,7 @@ Each voting system would require its own rules to specified for the vote to be s
 	\item[Technical issues]
 		This may be a generally difficult task to complete across a network of peers where fully operational communications are not guaranteed, and not all peers are guaranteed to be connected at all times.
 	\item[Dependencies on other requirements]
-		This is dependent on \ref{sssec:blk-comms}.
+		This is dependent on \S\ref{sssec:blk-comms}.
 \end{description}
 
 \subsection{Voting System}
@@ -225,7 +225,7 @@ Each voting system would require its own rules to specified for the vote to be s
 	\item[Technical issues]
 		If homomorphic encryption is to be used to tally votes, this may not work in some voting systems which are not a simple count, but have weighting towards votes and different criteria for an outcome to be determined.
 	\item[Dependencies on other requirements]
-		This is dependent on \ref{sssec:vote-sys-calc} and \ref{sssec:ballot-enc-trans}.
+		This is dependent on \S\ref{sssec:vote-sys-calc} and \S\ref{sssec:ballot-enc-trans}.
 \end{description}
 
 \subsubsection{The ledger can be processed to obtain a vote's result}
@@ -236,26 +236,38 @@ Each voting system would require its own rules to specified for the vote to be s
 	\item[Criticality]
 		High
 	\item[Technical issues]
-		This faces very similar issues as mentioned in \ref{sssec:vote-sys-rep}.
+		This faces very similar issues as mentioned in \S\ref{sssec:vote-sys-rep}.
 	\item[Dependencies on other requirements]
-		This is dependent on \ref{sssec:vote-sys-rep} and \ref{sssec:ballot-enc-trans}.
+		This is dependent on \S\ref{sssec:vote-sys-rep} and \S\ref{sssec:ballot-enc-trans}.
+\end{description}
+
+\subsubsection{Any user should be able to calculate the result of the final vote}
+\begin{description}
+	\item[Description]
+		In order for the system to remain trustless, the calculation of the result of the votes should be calculatable by any user of the system, not just one trusted user.
+	\item[Criticality]
+		High
+	\item[Technical issues]
+		As before, the votes must be countable without a decryption of the transactions revealing what way a particular voter cast their vote.
+	\item[Dependencies on other requirements]
+		This is dependent on \S\ref{sssec:ballot-enc-trans} and \S\ref{sssec:vote-sys-calc}.
 \end{description}
 
 \subsubsection{A user can see their vote in the ledger}
 \label{sssec:vote-sys-view}
 \begin{description}
 	\item[Description]
-		A user should be able to see that their ballot has been added to the ledger correctly. They should be able to do this without identifying it as their vote and without revealing the contents of the vote.
+		A user should be able to see that their ballot has been added to the ledger correctly. They should be able to do this without revealing the contents of their ballot.
 	\item[Criticality]
 		Medium
 	\item[Technical issues]
-		A user should not be able to identify the contents of their ballot so as to avoid the selling of votes.
+		A user should not be able to identify the contents of their ballot to prevent the sale of votes.
 	\item[Dependencies on other requirements]
 		None.
 \end{description}
 
 \section{System Architecture}
-Please see Figure \ref{fig:system-architecture} on page \pageref{fig:system-architecture} for the diagram. The system architecture consists of a network of nodes, all of which run the client software. Nodes are connected to form a peer-to-peer network.
+Please see Figure \ref{fig:system-architecture} on page \pageref{fig:system-architecture} for the diagram. The system architecture consists of a network of nodes, all of which run the client software. Nodes are connected to form a \texttt{P2P} network.
 
 \begin{figure}[ht]
 \centering
