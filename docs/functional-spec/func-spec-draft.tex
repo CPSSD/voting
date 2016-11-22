@@ -47,21 +47,21 @@ The need for this system arises from the lack of a secure, trustless, tamper-pro
 		The \textit{ledger} is a growing record of all \textit{ballots} which have been cast. The ledger is comprised of a series of \textit{blocks}, each block referring to the previous block to form a chain.
 
     \item[Block]
-        Each \textit{block} contains a set number of \{transactions}. Transactions are publicly viewable, but their contents are secured using cryptographic encryption.
+        Each \textit{block} contains a set number of \textit{transactions}. Transactions are publicly viewable, but their contents are secured using cryptographic encryption.
 
 	\item[Transaction]
 		Each transaction in a \textit{block} contains a single \textit{ballot}, which has been encrypted to provide anonymity and to prevent tampering.
 
     \item[Ballot]
-        A \textit{ballot} is the form which a voter fills out to cast their \{vote}.
+        A \textit{ballot} is the form which a voter fills out to cast their \textit{vote}.
 
 \end{description}
 
 \section{General Description}
 \subsection{Product/System Functions}
-The \proj{} system is designed to enable electronic voting to be carried out securely, tamper-proof and anonymously. A user of the system will cast a vote electronically through some user interface. The user's vote is then encrypted to form a \textit{secured vote}. The user can verify that their vote is what they intended by decrypting it. This will spoil the ballot, but after repeated casting and decrypting the user can be sure that their vote is accurate. When the user is happy with their ballot, it is then broadcast to all of the client's peers to be verified. The verification of the transaction requires a proof of work to be a valid block. This proof of work entails some computationally expensive task. When the proof of work is complete, the block is then broadcast to a client's peers. If there is disagreement between a new block, consensus is used to select the correct version which is then broadcast to all peers.
 
-To verify their vote, a user can look at the blockchain and verify that their receipt exists on the chain. Homomorphic encryption of votes allows them to be tallied without decrypting individual votes. Any user will be able to perform the computation to tally the votes.
+The \proj{} system is designed to enable electronic voting to tamper-proof, anonymous and to be carried out securely. A user of the system will cast a \textit{ballot} electronically through some user interface. The user's \textit{ballot} is then encrypted to form a secure \textit{transaction}. The user can verify that their \textit{ballot} is as they intended by decrypting it. This will spoil and invalidate the \textit{ballot}, but after repeated casting and decrypting the user's certainty in the system can be assured\footnote{A user can never be 100\% certain that their vote is as intended without spoiling their ballot. The probability that their ballot has been tampered with is denoted by \[P(t) = (1/2)^n\] where \[t\] is the event in which a ballot has been tampered with and \[n\] is the number of times a user decrypts their vote to check it. After only 7 encryptions and decryptions, the user can be sure with a greater than 99\% probability that their ballot has not been tampered with.}. When the user is happy with their \textit{ballot}, the \textit{transaction} is then broadcast to all of the client's peers to be verified. The veriInfication of the \textit{transaction} requires a proof of work to be completed by the peers. This proof of work entails some computationally expensive task. When the proof of work is complete, the \textit{block} is then broadcast to a client's peers. If there is disagreement between a new \textit{block}, consensus is used to select the correct version which is then broadcast to all peers.
+To verify their vote, a user can look at the blockchain and verify that their receipt exists on the chain. Homomorphic encryption\footnote{Homomorphic encryption allows computations to be carried out on ciphertext, without the need to reveal the value of the plaintext. This creates an encrypted result which, when decrypted, matches the result of the same operations being performed on the plaintext.} of votes allows them to be tallied without decrypting individual votes. Any user should be able to perform the computation to tally the votes.
 
 \subsection{User Characteristics}
 A user will be any eligible voter. The users are not expected to require any prior knowledge of blockchains, cryptography or other technical concepts described in this document. Because different users may have different user needs or certain levels of ability, the system must be accessible. As a graphical user interface is not a major priority for the system, this challenge will not be addressed to any major extent. The system will be used by text inputs, similar to a command line program, on top of which a UI can be built at a later date.
