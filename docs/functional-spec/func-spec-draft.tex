@@ -30,6 +30,11 @@
 \end{tabular}\end{center}
 
 \newpage
+
+\tableofcontents
+
+\newpage
+
 \section{Introduction}
 This document describes an implementation of an electronic voting system which utilises a blockchain\footnote{A blockchain is a distributed database which maintains a growing ledger of records called blocks. Each block is timestamped and linked to the previous block to create the chain. The data in a block cannot be altered without breaking the chain} database. The system is used to allow a user to electronically cast a vote in an anonymous, verifiable and tamper-proof manner. Voters fill out a ballot which is ecnrypted to form a transaction. This is then broadcast over a peer-to-peer network. The final vote can be counted and verified by any user, but no users' ballots can be traced back to a voter.
 
@@ -37,8 +42,11 @@ The need for this system arises from the lack of a secure, trustless, tamper-pro
 
 \begin{description}
 
+    \item[Node]
+        A \textit{node} is some machine which is running the \proj{} client software. Any machine can be a \textit{node} in the system if it is running the client software and has a working internet connection.
+
     \item[Peer-to-peer network \texttt{(P2P)}]
-        A peer-to-peer network is a distributed networking architecture in which peer nodes are equal and can act as both a "client" and a "server" for other nodes on the network. It eliminates the need for a centralized server. We will refer to the peer-to-peer network as a \texttt{P2P} network from here on.
+        A peer-to-peer network is a distributed networking architecture in which peer \textit{nodes} are equal and can act as both a ``client'' and a ``server'' for other \textit{nodes} on the network. It eliminates the need for a centralized server. We will refer to the peer-to-peer network as a \texttt{P2P} network from here on.
 
 	\item[Blockchain]
 		The blockchain is the distributed database which maintains the \textit{ledger} of \textit{ballots}. It is broadcast to all participants in the system via the \texttt{P2P} network. Each client will maintain an up-to-date version of the \textit{ledger} to the best of their knowledge. The requirements for the blockchain are described further in section \S\ref{subsec:blockchain} on page \pageref{subsec:blockchain}.
@@ -80,7 +88,7 @@ A user selects candidate $A$ on their electronic ballot. They verify that their 
 A user selects candidate options $A$, $D$ and $E$ on their ballot. They choose not to rank the last two options $B$ or $C$. After casting the ballot, their transaction is verified, and added to the ledger.
 
 \subsubsection{User selects no options on their ballot}
-A user chooses not to select an option on their ballot. This is represented as selecting a "None of the above" option for the purposes of the vote.
+A user chooses not to select an option on their ballot. This is represented as selecting a ``None of the above'' option for the purposes of the vote.
 
 \subsubsection{User spoils their ballot by selecting wrong options}
 The user selects both candidate $A$ and $B$ on their electronic ballot where only one selection should be made. The system will not allow an incorrect selection such as this, and alerts the user to the error. The user can then correct the error.
