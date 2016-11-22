@@ -70,36 +70,42 @@ A user should be able to input a \textit{vote}, and verify their selection. Once
 
 \subsection{Operational Scenarios}
 \subsubsection{Main}
-The main scenario in which the system is intended to be used is any large scale elections, referendums or other votes in which a large body of people will participate in. These votes are required to provide anonymity to voters, tamper-proof security, easy tallying and re-counting of ballots, and a trustless\footnote{A trustless environment is one in which no one individual or group requires to be trusted to ensure the integrity of the system. For example, a bank is not trustless, as you must trust the bank to keep its record of your account accurate and free from tampering.} environment.
+The main scenario in which the system is intended to be used is any large scale elections, referendums or other votes in which a large body of people will participate. These scenarios are required to provide anonymity to voters, tamper-proof security, easy tallying and re-counting of ballots, and a trustless\footnote{A trustless environment is one in which no one individual or group requires to be trusted to ensure the integrity of the system. In a paper ballot, you don't trust any one person to be alone with a ballot box during transport. However, in a paper ballot, people can be threatened, bribed or incabable of securing a ballot box from being tampered with.} environment.
 
 \subsection{User stories}
 \subsubsection{User casts a vote which is valid}
-A user selects candidate A on their electronic ballot. They verify that their selection was correctly registered and cast the vote. Their vote is then verified by peers on the network and added to the ledger.
+A user selects candidate $A$ on their electronic ballot. They verify that their selection was correctly registered and cast the ballot. Their transaction is then verified by peers on the network and added to the ledger.
 
 \subsubsection{User ranks 3 out of 5 options on their ballot}
-A user selects candidate options A, D and E on their ballot. They choose not to rank the last two options B or C. Their vote is verified, and added to the ledger.
+A user selects candidate options $A$, $D$ and $E$ on their ballot. They choose not to rank the last two options $B$ or $C$. After casting the ballot, their transaction is verified, and added to the ledger.
 
 \subsubsection{User selects no options on their ballot}
 A user chooses not to select an option on their ballot. This is represented as selecting a "None of the above" option for the purposes of the vote.
 
 \subsubsection{User spoils their ballot by selecting wrong options}
-The user selects both candidate A and B on their electronic ballot. The system will not allow an incorrect selection such as this, and alerts the user to the error. The user then starts the process from the start.
+The user selects both candidate $A$ and $B$ on their electronic ballot where only one selection should be made. The system will not allow an incorrect selection such as this, and alerts the user to the error. The user can then correct the error.
 
 \subsection{Constraints}
 \label{ssec:constraints}
-A voting system in general needs a few things to make it fair. A prime factor of a successful voting system is that a voter should not be able to sell their vote. For this requirement to be met, a user should have no way of proving what way they filled out their ballot to the outside world. This also means that the ballot itself should have no way of identifying who filled it out.
+A voting system\footnote{A voting system consists of the set of rules which must be followed for a vote to be valid, and defines how otes are cast, counted and aggregated to yield the final result. Examples include a plurality, majority representation and many other variations.} in general needs a few things to make it fair, namely:
 
-Ballots should also not be tamperable. This is why some voting systems use pencil instead of pens, to ensure that no erasing ink could be used to invalidate a voter's ballot.
+\begin{enumerate}
+    \item
+        A voter should not be able to sell their vote. For this constraint to be met, a user should have no way of proving what way they filled out their ballot to the outside world. This also means that the ballot itself should have no way of identifying who filled it out.
 
-Different voting systems\footnote{A voting system consists of the set of rules which must be followed for a vote to be valid, and defines how otes are cast, counted and aggregated to yield the final result. Examples include a plurality, majority representation and many other variations.} also have different requirements.
+    \item
+        Ballots should not be tamperable. This is why some voting systems use pencil instead of pens, to ensure that no erasing ink could be used to invalidate a voter's ballot.
+\end{enumerate}
 
-In the simplest case a voting system in which a voter selects a single option from two or more choices, and the option with the most votes wins. Other systems are more complicated and require more complicated comutation to achieve a result.
+Different voting systems also have different requirements.
 
-Such systems include weighted voting systems, proportional, semi-proportional, rated and multiple winner systems. Such systems pose challenges as the votes may not be very easily calculated as with a simple tally.
+In the simplest case we have a voting system in which a voter selects a single option from two or more choices, and the option with the most votes wins. Other systems are more complicated and require more complicated computation to achieve a result.
 
-Some voting systems also require the polling statistics to be kept a secret until the end of the vote. This could prevent early predictions from causing a swing in the vote due to people believing that a particular candidate has already won.
+Such systems include weighted voting systems, proportional, semi-proportional, rated and multiple winner systems. Such systems pose challenges as the votes may not be calculated as easily as with a simple tally.
 
-Each voting system would require its own rules to specified for the vote to be successful. For this reason the \proj{} system will focus on two systems as a proof of concept, with the ability to add more systems. The two systems will be \textit{Proportional Reprisentation with a Single Transferable Vote}\footnote{The PR-STV system is used in Ireland.} and \textit{Party List Proportional Representation}\footnote{The Party List PR system is used in 85 countries}.
+Some voting systems also require the polling statistics to be kept a secret until the end of the vote. This is usually to prevent early predictions from causing a swing in the vote due to people believing that a particular candidate or side has already won.
+
+Each voting system would require its own rules to specified for the vote to be successful. For this reason the \proj{} system will focus on only one or two systems as a proof of concept, with the ability to add more systems being kept in mind during development. The two candidate systems will be \textit{Proportional Reprisentation with a Single Transferable Vote}\footnote{The PR-STV system is used in Ireland.} and \textit{Party List Proportional Representation}\footnote{The Party List PR system is used in 85 countries.}.
 
 \section{Functional Requirements}
 
