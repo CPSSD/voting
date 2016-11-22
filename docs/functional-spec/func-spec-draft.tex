@@ -31,20 +31,29 @@
 
 \newpage
 \section{Introduction}
-This document describes an implementation of an electronic voting system which utilises a blockchain\footnote{A blockchain is a distributed database which maintains a growing ledger of records called blocks. Each block is timestamped and linked to the previous block to create the chain. The data in a block cannot be altered without breaking the chain} database. The system is used to allow a user to electronically cast a vote in an anonymous, verifiable and tamper-proof manner. Votes are ecnrypted and cast over a peer-to-peer network. The final votes can be counted and verified by any user, but no users' votes can be traced back to a voter.
+This document describes an implementation of an electronic voting system which utilises a blockchain\footnote{A blockchain is a distributed database which maintains a growing ledger of records called blocks. Each block is timestamped and linked to the previous block to create the chain. The data in a block cannot be altered without breaking the chain} database. The system is used to allow a user to electronically cast a vote in an anonymous, verifiable and tamper-proof manner. Voters fill out a ballot which is ecnrypted to form a transaction. This is then broadcast over a peer-to-peer network. The final vote can be counted and verified by any user, but no users' ballots can be traced back to a voter.
 
 The need for this system arises from the lack of a secure, trustless, tamper-proof and anonymous electronic voting system. Paper ballots are slower, and more expensive to conduct (work hours to organise polling stations, tallying votes, re-counts of votes, multiple voting options, errors filling out a ballot, etc). The \proj{} system aims to tackle some of these issues.
 
 \begin{description}
 
+    \item[Peer-to-peer network (P2P)]
+        A peer-to-peer network is a distributed networking architecture in which peer nodes are equal and can act as both a "client" and a "server" for other nodes on the network. It eliminates the need for a centralized server. We will refer to the peer-to-peer network as a P2P network from here on.
+
 	\item[Blockchain]
-		The blockchain is the database which maintains the \textit{ledger} of \textit{votes}. It is distributed amongst all participants in the system via peer-to-peer networking. Each client will maintain an up-to-date version of the \textit{ledger} to the best of their knowledge. The blockchain is described further in section \S\ref{subsec:blockchain} on page \pageref{subsec:blockchain}.
+		The blockchain is the distributed database which maintains the \textit{ledger} of \textit{ballots}. It is broadcast to all participants in the system via the P2P network. Each client will maintain an up-to-date version of the \textit{ledger} to the best of their knowledge. The requirements for the blockchain are described further in section \S\ref{subsec:blockchain} on page \pageref{subsec:blockchain}.
 
 	\item[Ledger]
-		The \textit{ledger} is a growing record of each \textit{vote} which has been cast. It is publicly viewable.
+		The \textit{ledger} is a growing record of all \textit{ballots} which have been cast. The ledger is comprised of a series of \textit{blocks}, each block referring to the previous block to form a chain.
 
-	\item[Vote]
-		Each block in the \textit{ledger} contains a single \textit{vote}, which is encrypted to provide anonymity and to prevent tampering. The structure of a secure \textit{vote} is described further in \S\ref{subsec:securevote} on page \pageref{subsec:securevote}.
+    \item[Block]
+        Each \textit{block} contains a set number of \{transactions}. Transactions are publicly viewable, but their contents are secured using cryptographic encryption.
+
+	\item[Transaction]
+		Each transaction in a \textit{block} contains a single \textit{ballot}, which has been encrypted to provide anonymity and to prevent tampering.
+
+    \item[Ballot]
+        A \textit{ballot} is the form which a voter fills out to cast their \{vote}.
 
 \end{description}
 
