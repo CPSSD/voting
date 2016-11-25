@@ -15,7 +15,7 @@
 
 \newcommand{\proj}{AnonEvote}
 
-\title{\proj{}\\A Project on Blockchain Evoting\\Functional Specification}
+\title{\proj{}\\A Project on Blockchain E-voting\\Functional Specification}
 \author{Michael Wall\\13522003}
 \date{\today}
 
@@ -36,9 +36,9 @@
 \newpage
 
 \section{Introduction}
-This document describes an implementation of an electronic voting system which utilises a blockchain\footnote{A blockchain is a distributed database which maintains a growing ledger of records called blocks. Each block is timestamped and linked to the previous block to create the chain. The data in a block cannot be altered without breaking the chain} database. The system is used to allow a user to electronically cast a vote in an anonymous, verifiable and tamper-proof manner. Voters fill out a ballot which is ecnrypted to form a transaction. This is then broadcast over a peer-to-peer network. The final vote can be counted and verified by any user, but no users' ballots can be traced back to a voter.
+This document describes an implementation of an electronic voting system which utilizes a blockchain\footnote{A blockchain is a distributed database which maintains a growing ledger of records called blocks. Each block is time stamped and linked to the previous block to create the chain. The data in a block cannot be altered without breaking the chain} database. The system is used to allow a user to electronically cast a vote in an anonymous, verifiable and tamper-proof manner. Voters fill out a ballot which is encrypted to form a transaction. This is then broadcast over a peer-to-peer network. The final vote can be counted and verified by any user, but no users' ballots can be traced back to a voter.
 
-The need for this system arises from the lack of a secure, trustless, tamper-proof and anonymous electronic voting system. Paper ballots are slower, and more expensive to conduct (work hours to organise polling stations, tallying votes, re-counts of votes, multiple voting options, errors filling out a ballot, etc). The \proj{} system aims to tackle some of these issues.
+The need for this system arises from the lack of a secure, trustless, tamper-proof and anonymous electronic voting system. Paper ballots are slower, and more expensive to conduct (work hours to organize polling stations, tallying votes, re-counts of votes, multiple voting options, errors filling out a ballot, etc). The \proj{} system aims to tackle some of these issues.
 
 \begin{description}
 
@@ -72,13 +72,13 @@ The \proj{} system is designed to enable electronic voting to be tamper-proof, a
 To verify their vote, a user can look at the blockchain and verify that their receipt exists on the chain. Homomorphic encryption\footnote{Homomorphic encryption allows computations to be carried out on ciphertext, without the need to reveal the value of the plaintext. This creates an encrypted result which, when decrypted, matches the result of the same operations being performed on the plaintext.} of votes allows them to be tallied without decrypting individual votes. Any user should be able to perform the computation to tally the votes.
 
 \subsection{User Characteristics}
-A user will be any eligible voter. The users are not expected to require any prior knowledge of \textit{blockchains}, cryptography or other technical concepts described in this document. Because different users may have different user needs or certain levels of ability, the system should be accessible. As a graphical user interface is not the main focus of the system, this challenge will not be addressed to any major extent. The system will be used via text inputs, similar to a command line program, on top of which a UI could be built at a later date.
+A user will be any eligible voter. The users are not expected to require any prior knowledge of \textit{blockchains}, cryptography or other technical concepts described in this document. Because different users may have different user needs or certain levels of ability, the system should be accessible. As a graphical user interface is not the main focus of the system, this challenge will not be addressed to any major extent. The system will be used via text inputs, similar to a command line program, on top of which a user interface could be built at a later date.
 
 A user should be able to input a \textit{vote}, and verify their selection. Once the user has made their selections, they should be able to validate the encryption of their \textit{ballot} as many times as they see sufficient. Once the user is happy that the system is registering their intended selections, the user should then be able to cast their \textit{ballot} as a \textit{transaction} to the network to have it verified and added to the \textit{ledger}. The user should also receive a digital receipt of their \textit{transaction} so that they can verify their \textit{ballot} exists at a later date. The user should also be able to perform the required computation to tally the votes should they wish to do so.
 
 \subsection{Operational Scenarios}
 \subsubsection{Main}
-The main scenario in which the system is intended to be used is any large scale elections, referendums or other votes in which a large body of people will participate. These scenarios are required to provide anonymity to voters, tamper-proof security, easy tallying and re-counting of ballots, and a trustless\footnote{A trustless environment is one in which no one individual or group requires to be trusted to ensure the integrity of the system. In a paper ballot, you don't trust any one person to be alone with a ballot box during transport. However, in a paper ballot, people can be threatened, bribed or incabable of securing a ballot box from being tampered with.} environment.
+The main scenario in which the system is intended to be used is any large scale elections, referendums or other votes in which a large body of people will participate. These scenarios are required to provide anonymity to voters, tamper-proof security, easy tallying and re-counting of ballots, and a trustless\footnote{A trustless environment is one in which no one individual or group requires to be trusted to ensure the integrity of the system. In a paper ballot, you don't trust any one person to be alone with a ballot box during transport. However, in a paper ballot, people can be threatened, bribed or incapable of securing a ballot box from being tampered with.} environment.
 
 \subsection{User stories}
 \subsubsection{User casts a vote which is valid}
@@ -95,7 +95,7 @@ The user selects both candidate $A$ and $B$ on their electronic ballot where onl
 
 \subsection{Constraints}
 \label{ssec:constraints}
-A voting system\footnote{A voting system consists of the set of rules which must be followed for a vote to be valid, and defines how otes are cast, counted and aggregated to yield the final result. Examples include a plurality, majority representation and many other variations.} in general needs a few things to make it fair, namely:
+A voting system\footnote{A voting system consists of the set of rules which must be followed for a vote to be valid, and defines how votes are cast, counted and aggregated to yield the final result. Examples include a plurality, majority representation and many other variations.} in general needs a few things to make it fair, namely:
 
 \begin{enumerate}
     \item
@@ -113,7 +113,7 @@ Such systems include weighted voting systems, proportional, semi-proportional, r
 
 Some voting systems also require the polling statistics to be kept a secret until the end of the vote. This is usually to prevent early predictions from causing a swing in the vote due to people believing that a particular candidate or side has already won.
 
-Each voting system would require its own rules to specified for the vote to be successful. For this reason the \proj{} system will focus on only one or two systems as a proof of concept, with the ability to add more systems being kept in mind during development. The two candidate systems will be \textit{Proportional Representation with a Single Transferable Vote}\footnote{The PR-STV system is used in Ireland.} and \textit{Party List Proportional Representation}\footnote{The Party List PR system is used in 85 countries.}.
+Each voting system would require its own rules to specified for the vote to be successful. For this reason the \proj{} system will focus on only one or two systems as a proof of concept, with the ability to add more systems being kept in mind during development. The two candidate systems will be \textit{Proportional Representation with a Single Transferable Vote (PR-STV)}\footnote{The PR-STV system is used in Ireland.} and \textit{Party List Proportional Representation (Party List PR)}\footnote{The Party List PR system is used in 85 countries.}.
 
 \section{Functional Requirements}
 
@@ -123,7 +123,7 @@ Each voting system would require its own rules to specified for the vote to be s
 \subsubsection{User can access the system}
 \begin{description}
 	\item[Description]
-		A user should be able to securely access the system and be verified to cast their vote. The no user should be able to masquerade as another user to cast their vote.
+		A user should be able to securely access the system and be verified to cast their vote. No user should be able to masquerade as another user to cast their vote.
 	\item[Criticality]
 		Low
 	\item[Technical issues]
@@ -135,11 +135,11 @@ Each voting system would require its own rules to specified for the vote to be s
 \subsubsection{User can make selections on their ballot}
 \begin{description}
 	\item[Description]
-		A user should be able to input the appropriate options on their ballot, including multiple selections, scorings, abstaining from selections etc.
+		A user should be able to input the appropriate options on their ballot, including multiple selections, scorings, abstaining from selections, etc.
 	\item[Criticality]
 		High
 	\item[Technical issues]
-		A certain type of vote may require text input, in which case the user could enter an error or mispelling into the system.
+		A certain type of vote may require text input, in which case the user could enter an error or misspelling into the system.
 	\item[Dependencies on other requirements]
 		This is dependent on \S\ref{sssec:vote-sys-rep}.
 \end{description}
@@ -147,7 +147,7 @@ Each voting system would require its own rules to specified for the vote to be s
 \subsubsection{User can verify their ballot is as intended}
 \begin{description}
 	\item[Description]
-		A user should be able to verify that their input ballot is encrypted as intended. This may invlove decrypting their transaction before it is broadcast to the network in order to verify that it represents their intended ballot. This will invalidate that particular encryption of the ballot. The user should be able to perform this a number of times until they are assured that the system is correctly representing their ballot.
+		A user should be able to verify that their input ballot is encrypted as intended. This may involve decrypting their transaction before it is broadcast to the network in order to verify that it represents their intended ballot. This will invalidate that particular encryption of the ballot. The user should be able to perform this a number of times until they are assured that the system is correctly representing their ballot.
 	\item[Criticality]
 		High
 	\item[Technical issues]
@@ -176,7 +176,7 @@ Each voting system would require its own rules to specified for the vote to be s
 	\item[Criticality]
 		High
 	\item[Technical issues]
-		It is a huge issue to ensure that a user cannot link their vote to their identity, as this enables the sale of votes. The result of the vote should be calculatable, while also not revealing information about the voter.
+		It is a huge issue to ensure that a user cannot link their vote to their identity, as this enables the sale of votes. The result of the vote should be calculable, while also not revealing information about the voter.
 	\item[Dependencies on other requirements]
 		This is dependent on \S\ref{sssec:vote-sys-calc} and \S\ref{sssec:vote-sys-view}.
 \end{description}
@@ -204,7 +204,7 @@ Each voting system would require its own rules to specified for the vote to be s
 	\item[Criticality]
 		High
 	\item[Technical issues]
-		Selecting a proof of work of sufficient difficulty without being too expensive. If a transaction can be verified instantaneously, it becomes easier to hack the system. If it takes too long to verify, then the user could have to wait an inconvenient amount of time before their vote is successfuly added to the system.
+		Selecting a proof of work of sufficient difficulty without being too expensive. If a transaction can be verified instantaneously, it becomes easier to hack the system. If it takes too long to verify, then the user could have to wait an inconvenient amount of time before their vote is successfully added to the system.
 	\item[Dependencies on other requirements]
 		None.
 \end{description}
@@ -227,7 +227,7 @@ Each voting system would require its own rules to specified for the vote to be s
 \label{sssec:vote-sys-rep}
 \begin{description}
 	\item[Description]
-		Ideally, the style of voting sytem used should be independent from the blockchain implementation, meaning the system can be used in different regions which require different rules and regulations. However, the system will be required to work on at least one system as a proof of concept.
+		Ideally, the style of voting system used should be independent from the blockchain implementation, meaning the system can be used in different regions which require different rules and regulations. However, the system will be required to work on at least one system as a proof of concept.
 	\item[Criticality]
 		High
 	\item[Technical issues]
@@ -240,7 +240,7 @@ Each voting system would require its own rules to specified for the vote to be s
 \label{sssec:vote-sys-calc}
 \begin{description}
 	\item[Description]
-		The sytem should be implemented in such a way as to allow the result of the vote to be calculated without compromising voter identities or linking votes to voters.
+		The system should be implemented in such a way as to allow the result of the vote to be calculated without compromising voter identities or linking votes to voters.
 	\item[Criticality]
 		High
 	\item[Technical issues]
@@ -252,7 +252,7 @@ Each voting system would require its own rules to specified for the vote to be s
 \subsubsection{Any user should be able to calculate the result of the final vote}
 \begin{description}
 	\item[Description]
-		In order for the system to remain trustless, the calculation of the result of the votes should be calculatable by any user of the system, not just one trusted user.
+		In order for the system to remain trustless, the calculation of the result of the votes should be calculable by any user of the system, not just one trusted user.
 	\item[Criticality]
 		High
 	\item[Technical issues]
@@ -280,7 +280,7 @@ Please see Figure \ref{fig:system-architecture} on page \pageref{fig:system-arch
 \begin{figure}[ht]
 \centering
 \includegraphics[width=\textwidth]{SystemArchitecture.eps}
-\caption{The system consists of a peer to peer network of nodes, all of which are running the client software. The user interacts with the system through a node running the client software.}
+\caption{The system consists of a \texttt{P2P} network of nodes, all of which are running the client software. The user interacts with the system through a node running the client software.}
 \label{fig:system-architecture}
 \end{figure}
 
@@ -299,7 +299,7 @@ My project will not consist of a traditional schedule which has a large block of
 
 I will be working with a sprint duration of two weeks, enabling sufficient time for research and development of selected tasks, while also ensuring that any necessary feedback can be provided between sprints. Any issues that arise during a sprint can be dealt with before progressing further with the project.
 
-Tasks for any given sprint will be selected from the project backlog at the beginning of the sprint. Any new issues will be added to the backlog as the project progresses. Any tasks which require grooming will be expanded into more specific sub tasks which are suitable for development in a sprint. The current project backlog can be seen at \S\ref{sec:backlog}
+Tasks for any given sprint will be selected from the project backlog at the beginning of the sprint. Any new issues will be added to the backlog as the project progresses. Any tasks which require grooming will be expanded into more specific sub tasks which are suitable for development in a sprint. The current project backlog can be seen at \S\ref{sec:backlog}.
 
 I will be using a private repository on GitHub to manage my code, and will push changes to my GitLab repository frequently. I will use \textit{Waffle.io} to manage the project backlog and to track issues. This system will be integrated with the GitHub repository. I will use a Travis server to perform continuous integration testing where applicable.
 
