@@ -26,7 +26,7 @@
 \begin{center}\begin{tabular}{|l|l|}
 	\hline
 	\textbf{Version} & \textbf{Comments} \\ \hline
-	0.1 & Initial Draft.\\ \hline
+	1.0 & Submission version.\\ \hline
 \end{tabular}\end{center}
 
 \newpage
@@ -34,6 +34,24 @@
 \tableofcontents
 
 \newpage
+
+\section*{Disclaimer}
+Before reading this document it is necessary to understand the limitations of voting systems. Nearly every system that exists today has flaws which can disrupt the integrity of a system. This applies to paper based, electronic and hybrid\footnote{A hybrid system might be one where a paper ballot is used for the voter to cast a vote on, but is then electronically scanned or processed in some manner.} systems. Some of the issues that face these voting systems are:
+
+\begin{itemize}
+\item Voter verification
+\item Voter anonymity
+\item Sale of votes
+\item Integrity of ballots
+\item Voter impersonation
+\item Identifying a rigged system
+\item Accessibility to the system
+\item And various others\ldots
+\end{itemize}
+
+While this document specifies some of the ideal functionality of voting system, the aim of \proj{} is not to solve all of these issues. Taking the case of anonymity versus verifiability: if is very difficult to verify that each ballot was produced by a verified voter without compromising the identity of any voter.
+
+I do not intend to focus on the issues of voter verifiability. I do intend to focus on preventing tamperable ballots, voter anonymity and the integrity of counting votes. I may or may not focus on other aspects of voting systems.
 
 \section{Introduction}
 This document describes an implementation of an electronic voting system which utilizes a blockchain\footnote{A blockchain is a distributed database which maintains a growing ledger of records called blocks. Each block is time stamped and linked to the previous block to create the chain. The data in a block cannot be altered without breaking the chain} database. The system is used to allow a user to electronically cast a vote in an anonymous, verifiable and tamper-proof manner. Voters fill out a ballot which is encrypted to form a transaction. This is then broadcast over a peer-to-peer network. The final vote can be counted and verified by any user, but no users' ballots can be traced back to a voter.
@@ -69,16 +87,16 @@ The need for this system arises from the lack of a secure, trustless, tamper-pro
 \subsection{Product/System Functions}
 
 The \proj{} system is designed to enable electronic voting to be tamper-proof, anonymous and to be carried out securely. A user of the system will cast a \textit{ballot} electronically through some user interface. The user's \textit{ballot} is then encrypted to form a secure \textit{transaction}. The user can verify that their \textit{ballot} is as they intended by decrypting it. This will spoil and invalidate the \textit{ballot}, but after repeated casting and decrypting the user's certainty in the system can be assured\footnote{A user can never be 100\% certain that their vote is as intended without spoiling their ballot. The probability that their ballot has been tampered with is denoted by \[P(t) = (1/2)^n\] where $t$ is the event in which a ballot has been tampered with and $n$ is the number of times a user decrypts their vote to check it. After only 7 encryption and decryption cycles, the user can be sure with a greater than 99\% probability that their ballot has not been tampered with.}. When the user is happy with their \textit{ballot}, the \textit{transaction} is then broadcast to all of the client's peers to be verified. The verification of the \textit{transaction} requires a proof of work to be completed by the peers. This proof of work entails some computationally expensive task. When the proof of work is complete, the \textit{block} is then broadcast to a client's peers. If there is disagreement between a new \textit{block}, consensus is used to select the correct version which is then broadcast to all peers.
-To verify their vote, a user can look at the blockchain and verify that their receipt exists on the chain. Homomorphic encryption\footnote{Homomorphic encryption allows computations to be carried out on ciphertext, without the need to reveal the value of the plaintext. This creates an encrypted result which, when decrypted, matches the result of the same operations being performed on the plaintext.} of votes allows them to be tallied without decrypting individual votes. Any user should be able to perform the computation to tally the votes.
+To verify their vote, a user can look at the blockchain and verify that their encrypted transaction exists on the chain. Homomorphic encryption\footnote{Homomorphic encryption allows computations to be carried out on ciphertext, without the need to reveal the value of the plaintext. This creates an encrypted result which, when decrypted, matches the result of the same operations being performed on the plaintext.} of votes allows them to be tallied without decrypting individual votes. Any user should be able to perform the computation to tally the votes.
 
 \subsection{User Characteristics}
 A user will be any eligible voter. The users are not expected to require any prior knowledge of \textit{blockchains}, cryptography or other technical concepts described in this document. Because different users may have different user needs or certain levels of ability, the system should be accessible. As a graphical user interface is not the main focus of the system, this challenge will not be addressed to any major extent. The system will be used via text inputs, similar to a command line program, on top of which a user interface could be built at a later date.
 
-A user should be able to input a \textit{vote}, and verify their selection. Once the user has made their selections, they should be able to validate the encryption of their \textit{ballot} as many times as they see sufficient. Once the user is happy that the system is registering their intended selections, the user should then be able to cast their \textit{ballot} as a \textit{transaction} to the network to have it verified and added to the \textit{ledger}. The user should also receive a digital receipt of their \textit{transaction} so that they can verify their \textit{ballot} exists at a later date. The user should also be able to perform the required computation to tally the votes should they wish to do so.
+A user should be able to input a \textit{vote}, and verify their selection. Once the user has made their selections, they should be able to validate the encryption of their \textit{ballot} as many times as they see sufficient. Once the user is happy that the system is registering their intended selections, the user should then be able to cast their \textit{ballot} as a \textit{transaction} to the network to have it verified and added to the \textit{ledger}. The user should also receive a digital receipt\footnote{A receipt is intended to be a pointer to a transaction on the blockchain. The receipt contains no information about how a voter filled out their ballot, nor does it reference the identity of the voter. Receipts could be issues sequentially as blocks are added to the chain.} of their \textit{transaction} so that they can verify their encrypted \textit{ballot} exists at a later date. The user should also be able to perform the required computation to tally the votes should they wish to do so.
 
 \subsection{Operational Scenarios}
 \subsubsection{Main}
-The main scenario in which the system is intended to be used is any large scale elections, referendums or other votes in which a large body of people will participate. These scenarios are required to provide anonymity to voters, tamper-proof security, easy tallying and re-counting of ballots, and a trustless\footnote{A trustless environment is one in which no one individual or group requires to be trusted to ensure the integrity of the system. In a paper ballot, you don't trust any one person to be alone with a ballot box during transport. However, in a paper ballot, people can be threatened, bribed or incapable of securing a ballot box from being tampered with.} environment.
+The main scenario in which the system is intended to be used is any large scale elections, referendums or other votes in which a large body of people will participate. These scenarios are required to provide anonymity to voters, tamper-proof security, easy tallying and re-counting of ballots in a trustless\footnote{A trustless environment is one in which no one individual or group requires to be trusted to ensure the integrity of the system. In a paper ballot, you don't trust any one person to be alone with a ballot box during transport. However, in a paper ballot, people can be threatened, bribed or incapable of securing a ballot box from being tampered with.} environment.
 
 \subsection{User stories}
 \subsubsection{User casts a vote which is valid}
@@ -99,10 +117,13 @@ A voting system\footnote{A voting system consists of the set of rules which must
 
 \begin{enumerate}
     \item
-        A voter should not be able to sell their vote. For this constraint to be met, a user should have no way of proving what way they filled out their ballot to the outside world. This also means that the ballot itself should have no way of identifying who filled it out.
+        A voter should not be able to sell their vote. For this constraint to be met, a user should have no way of proving what way they filled out their ballot to the outside world. This also means that the ballot itself should have no way of identifying who filled it out. This can be achieved by voter anonymity.
 
     \item
         Ballots should not be tamperable. This is why some voting systems use pencil instead of pens, to ensure that no erasing ink could be used to invalidate a voter's ballot.
+
+    \item
+        Ballots should be tallyable in a manner such that the final count can be agreed upon; i.e. an outcome of a vote can be determined using some counting system that all candidates can verify or agree on.
 \end{enumerate}
 
 Different voting systems also have different requirements.
@@ -127,7 +148,7 @@ Each voting system would require its own rules to specified for the vote to be s
 	\item[Criticality]
 		Low
 	\item[Technical issues]
-		It is a challenge to authenticate a single user, as the method of registering for the system must ensure that each citizen can only have one account, and that no other citizen can use another's account. It is expected that this authentication of users will be managed by a third party who wishes to implement this system.
+		It is a challenge to authenticate a single user, as the method of registering for the system must ensure that each citizen can only have one account, and that no other citizen can use another's account. It is expected that this authentication of users will be managed by a third party who wishes to implement this system. As such, this will not be handled by the \proj{} system.
 	\item[Dependencies on other requirements]
 		None.
 \end{description}
@@ -265,7 +286,7 @@ Each voting system would require its own rules to specified for the vote to be s
 \label{sssec:vote-sys-view}
 \begin{description}
 	\item[Description]
-		A user should be able to see that their ballot has been added to the ledger correctly. They should be able to do this without revealing the contents of their ballot.
+		A user should be able to see that their encrypted ballot has been added to the ledger correctly. Although a user can claim a transaction to be theirs, they should have no way of proving this or revealing the contents of their vote to a third party.
 	\item[Criticality]
 		Medium
 	\item[Technical issues]
@@ -295,13 +316,20 @@ Please see Figure \ref{fig:high-level-design} on page \pageref{fig:high-level-de
 \end{figure}
 
 \section{Development cycle}
-My project will not consist of a traditional schedule which has a large block of time for research, then development and then testing or polishing of the project. I will instead be using an agile approach for development.
+My project will not consist of a traditional waterfall schedule which has a large block of time for research, then development and then testing or polishing of the project. I will instead be using an agile approach for development. For completeness however, a Gannt chart representing a waterfall approach to the development of this project can be found at Figure \ref{fig:gannt-chart} on page \pageref{fig:gannt-chart}.
 
 I will be working with a sprint duration of two weeks, enabling sufficient time for research and development of selected tasks, while also ensuring that any necessary feedback can be provided between sprints. Any issues that arise during a sprint can be dealt with before progressing further with the project.
 
 Tasks for any given sprint will be selected from the project backlog at the beginning of the sprint. Any new issues will be added to the backlog as the project progresses. Any tasks which require grooming will be expanded into more specific sub tasks which are suitable for development in a sprint. The current project backlog can be seen at \S\ref{sec:backlog}.
 
 I will be using a private repository on GitHub to manage my code, and will push changes to my GitLab repository frequently. I will use \textit{Waffle.io} to manage the project backlog and to track issues. This system will be integrated with the GitHub repository. I will use a Travis server to perform continuous integration testing where applicable.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\textwidth]{gannt-chart.eps}
+\caption{This diagram shows an initial timeline based on the constraints and deadlines of the final year project system.}
+\label{fig:gannt-chart}
+\end{figure}
 
 \section{Preliminary project backlog}
 \label{sec:backlog}

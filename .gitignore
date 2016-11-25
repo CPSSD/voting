@@ -3,3 +3,6 @@
 *.log
 *.swp
 *.toc
+docs/functional-spec/HighLevelDesign-eps-converted-to.pdf
+docs/functional-spec/SystemArchitecture-eps-converted-to.pdf
+docs/functional-spec/gannt-chart-eps-converted-to.pdf
