@@ -2,7 +2,7 @@
 
 **MICHAEL-WALL**
 
-## Functional Specification
+## 001 - Functional Specification
 
 The Functional Specification was submitted on 24th November. It highlights the goals for the system along with the proposed functionality and architecture that the system will use. The following are the main points in summary.
 
@@ -14,3 +14,17 @@ AnonEvote aims to provide three core functions for voters:
 The system will be built using a blockchain database which is distributed over a peer-to-peer network. This will prevent the votes from being tampered with. Cryptography will be used to encrypt voter ballots in such a way that they are not tied to any user to keep their identity hidden. The votes should also be countable in some verifiable manner. The counting function should idealy be publicly usable so that any voter can verify the results of the vote.
 
 For more information please see the functional spec document on [GitLab](https://gitlab.computing.dcu.ie/wallm22/2017-ca400-wallm22/raw/master/docs/functional-spec/func-spec.pdf) or [GitHub](https://github.com/CPSSD/voting/blob/master/docs/functional-spec/func-spec.pdf).
+
+## 002 - Research on Homomorphic encryption schemes
+
+One candidate encryption system I came across was the [Pailler Cryptosystem](http://www.cs.tau.ac.il/~fiat/crypt07/papers/Pai99pai.pdf) which has homomorphic properties that lend themselves well to use in electronic voting.
+
+In short, the product of a set of ciphertexts will decrypt to the sum of their corresponding plaintexts. This assumes that all the messages have been encrypted using the same public key. The cryptosystem is non-deterministic, meaning that the same plaintext encrypted using the same public key will not give the same ciphertext. This is implemented through the use of a random value r during the encryption process which should ensure a negligible chance that a collision will occur.
+
+Some issues which arise from the use of this cryptosystem:
+- With access to the private key, an attacker could simply decrypt the individual votes, potentially allowing them to link a vote to a voter. We cannot allow this. 
+- A user who is encrypting 1 vote for a candidate could encrypt a vote with the value of 2 votes for the candidate, and this would not be evident in the decryption of the combined ciphertexts.
+
+Some areas to research to potentially solve the above issues:
+- The use of a sharded key system which would allow the decryption to be performed incrementally; using the shards of a private key owned by N parties where the private key is never created from its component parts.
+- The use of some zero-knowledge proof could verify that the vote cast contains either a 1 or a 0 vote (for or against), without revealling which way the user has voted. This could possibly be implemented using the Fiat-Shamir heuristic.
