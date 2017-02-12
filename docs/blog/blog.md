@@ -22,9 +22,20 @@ One candidate encryption system I came across was the [Pailler Cryptosystem](htt
 In short, the product of a set of ciphertexts will decrypt to the sum of their corresponding plaintexts. This assumes that all the messages have been encrypted using the same public key. The cryptosystem is non-deterministic, meaning that the same plaintext encrypted using the same public key will not give the same ciphertext. This is implemented through the use of a random value r during the encryption process which should ensure a negligible chance that a collision will occur.
 
 Some issues which arise from the use of this cryptosystem:
-- With access to the private key, an attacker could simply decrypt the individual votes, potentially allowing them to link a vote to a voter. We cannot allow this. 
+- With access to the private key, an attacker could simply decrypt the individual votes, potentially allowing them to link a vote to a voter. We cannot allow this.
 - A user who is encrypting 1 vote for a candidate could encrypt a vote with the value of 2 votes for the candidate, and this would not be evident in the decryption of the combined ciphertexts.
 
 Some areas to research to potentially solve the above issues:
 - The use of a sharded key system which would allow the decryption to be performed incrementally; using the shards of a private key owned by N parties where the private key is never created from its component parts.
 - The use of some zero-knowledge proof could verify that the vote cast contains either a 1 or a 0 vote (for or against), without revealling which way the user has voted. This could possibly be implemented using the Fiat-Shamir heuristic.
+
+## 003 - Research on sharded and shared keys
+
+One of the viable schemes to accomplish this goal is [Shamir's Secret Sharing scheme](https://cs.jhu.edu/~sdoshi/crypto/papers/shamirturing.pdf). It involves creating a polynomial of K degrees to represent the secret (in this case the private key), and then constructing N points from the polynomial for N participants (where N >= K). A polynomial of K degrees will require K of these points in order to retrieve the secret.
+
+The idea behind this is that a treshold can be set in the case of one or more of the participants not being present to reconstruct the secret.
+
+The [Lagrange basis polynomial](https://en.wikipedia.org/wiki/Lagrange_polynomial) can be constructed using the any subset of K points in order to get the secret value, represented by the constant a0 in the polynomial:
+f(x) = a0 + a1.x + a2.x^2 + ... + aK-1.x^k-1
+
+This will allow a key to be distributed over a number of clients, but brings with it the limitation of requiring a trusted user to generate and susbsequently destroy the original version of the private key.
