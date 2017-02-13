@@ -39,3 +39,11 @@ The [Lagrange basis polynomial](https://en.wikipedia.org/wiki/Lagrange_polynomia
 f(x) = a0 + a1.x + a2.x^2 + ... + aK-1.x^k-1
 
 This will allow a key to be distributed over a number of clients, but brings with it the limitation of requiring a trusted user to generate and susbsequently destroy the original version of the private key.
+
+## 004 - Optimizations of Lagrange Polynomial Interpolations
+
+While looking at the formula for interpolating Lagrange Polynomials, I have realized that some of the calculations do not need to be performed in order to retrieve the secret value.
+
+Since the secret value is represented by f(x) where x = 0, all of the components with a variable x will be essentially removed, so we will not need to produce them in the first place.
+
+This will reduce the number of multiplications required to retrieve the secret. I am not sure of the total savings of this optimization, but I belive it would be an exponential saving as the number of points required for the interpolation increases.
