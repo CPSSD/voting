@@ -47,3 +47,37 @@ While looking at the formula for interpolating Lagrange Polynomials, I have real
 Since the secret value is represented by f(x) where x = 0, all of the components with a variable x will be essentially removed, so we will not need to produce them in the first place.
 
 This will reduce the number of multiplications required to retrieve the secret. I am not sure of the total savings of this optimization, but I belive it would be an exponential saving as the number of points required for the interpolation increases.
+
+## 005 - Revised System Architecture
+
+After discussion with my supervisor we finalized the high level design for the system. As expected, there were some of the initial goals which I had set out in my functional specification document which turned out to be impractical to implement.
+
+These limitations were mainly due to:
+- conflicting requirements
+- aspects of the cryptography which simply were not possible to satisfy simultaneously
+- compromising other core goals
+
+Below is a diagram indicating the main components of the system. Two sources of the image are included.
+
+![Image of System Architecture - GitHub](https://github.com/CPSSD/voting/blob/master/docs/blog/images/high-level-system-architecture.png)
+![Image of System Architecture - GitLab](https://gitlab.computing.dcu.ie/wallm22/2017-ca400-wallm22/raw/306a63569cc5066772c26d6c27eb2ee3d510914b/docs/blog/images/high-level-system-architecture.png)
+
+The image depicts the following system:
+- Each user is assigned a randomized unique string from a list of known strings, in such a way that no one knows who is assigned which string
+- A trusted individual creates a keypair for the election
+- The trusted individual constructs a number of shareable keys from the private key, as described in Shamir's secret sharing scheme previously
+- These keys are distributed to nodes of the system, and the original private key is destroyed
+- The public key for the election is publicly available
+- A user can now create a vote, and encrypt it with the public election key
+- The user sends both their encrypted vote, along with their unique token which verifies their eligibility to vote, to a number of nodes in the system
+- Each node verifies that they have not seen the voting token before, and that the token is one from the predefined list
+- The node then signs the encrypted vote, and competes to create a block to add to the blockchain
+- The nodes are dissuaded from misbehaving as if they begin to change votes or tokens, their behaviour will differ from the other nodes in the system, thus identifying themselves as untrustworthy
+- Once the election is over, nodes will collaborate to reform the secret private key, and publish it
+- Any user can then tally the results, and perform analyses on the blockchain to calculate statistics relating to discrepencies and such
+
+This does introduce vulnerabilites to the system, such as the user being able to prove that they voted one way or another (through accurately predicting the decryption of their vote on the chain). However this system prioritises the anonymity of a user. If a user wishes to remain anonymous, there is no way to tie a vote back to a user. This fact is based on the assumption that the voting tokens are distributed in such a way that they are not ever tied to an individual.
+
+It is in the best interest of the individual nodes to behave. This is intended to prevent attempts to tamper with ballots, perform ballot stuffing, or to misplace ballots.
+
+The use of homomorphic encryption will allow nodes to perform the potentially compute expensive task of tallying votes in their encrypted form before the election has ended. They will only being able to reveal the true value of the election at the end once the secret key has been reconstructed.
