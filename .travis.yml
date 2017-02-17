@@ -1,0 +1,7 @@
+language: go
+
+go:
+  - 1.8
+
+notifications:
+  slack: ca-2017:GCnoH0AyPOhLNTSwE5NF9ce0
