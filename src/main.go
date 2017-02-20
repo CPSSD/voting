@@ -1,26 +1,33 @@
 package main
 
 import (
+	"crypto/rand"
 	"fmt"
 	"github.com/CPSSD/voting/src/utils"
+	"math/big"
 )
 
 func main() {
 	fmt.Println("Hello voting test file")
 
-	utils.GenerateKeyPair(512)
+	priv, err := utils.GenerateKeyPair(512)
+	utils.Check(err)
 
-	a := 3
-	p := &a
-	b := *p
+    fmt.Println(priv.Lambda, priv.PublicKey.N)
 
-	fmt.Println(a, *p, b)
+	upperBound := big.NewInt(1000000)
 
-	a = 5
+	plaintext, err := rand.Int(rand.Reader, upperBound)
+	utils.Check(err)
 
-	fmt.Println(a, *p, b)
+	fmt.Println("\nplaintext:", plaintext, "\n")
 
-	*p = 4
+	ciphertext := utils.Encrypt(plaintext, &priv.PublicKey)
 
-	fmt.Println(a, *p, b)
+	fmt.Println("\nplaintext:", plaintext, "\n", "\nciphertext:", ciphertext, "\n")
+
+	deciphered := utils.Decrypt(ciphertext, priv)
+
+	fmt.Println("\nplaintext:", plaintext, "\n", "\nciphertext:", ciphertext, "\ndeciphered:", deciphered, "\n")
+
 }
