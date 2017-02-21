@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-    
+
 	priv, err := crypto.GenerateKeyPair(1024)
 	utils.Check(err)
 
@@ -20,11 +20,11 @@ func main() {
 
 	fmt.Println("\nplaintext:", plaintext, "\n")
 
-	ciphertext := crypto.Encrypt(plaintext, &priv.PublicKey)
+	ciphertext, _ := crypto.Encrypt(plaintext, &priv.PublicKey)
 
 	fmt.Println("\nciphertext:", ciphertext, "\n")
 
-	deciphered := crypto.Decrypt(ciphertext, priv)
+	deciphered, _ := crypto.Decrypt(ciphertext, priv)
 
 	fmt.Println("\ndeciphered:", deciphered, "\n")
 

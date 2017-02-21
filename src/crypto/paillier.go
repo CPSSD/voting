@@ -4,7 +4,14 @@ import (
 	"crypto/rand"
 	"io/ioutil"
 	"math/big"
-    "github.com/CPSSD/voting/src/utils"
+    "errors"
+)
+
+var (
+    InvalidPlaintextError = errors.New("Invalid plaintext was submitted for encryption.")
+    InvalidCiphertextError = errors.New("Invalid ciphertext was submitted for decryption.")
+    InvalidEncryptionKeyError = errors.New("Invalid key submitted for encryption.")
+    InvalidDecryptionKeyError = errors.New("Invalid key submitted for decryption.")
 )
 
 // only simple function for testing purposes
@@ -30,16 +37,21 @@ type PublicKey struct {
 
 var one = big.NewInt(1)
 
-func generatePrimePair(bits int) (n, phiN *big.Int) {
+func generatePrimePair(bits int) (n, phiN *big.Int, err error) {
 
     gcd := new(big.Int)
 
     for gcd.Cmp(one) != 0 {
 
 		p, err := rand.Prime(rand.Reader, bits)
-		utils.Check(err)
+        if err != nil {
+            return nil, nil, err
+        }
+
 		q, err := rand.Prime(rand.Reader, bits)
-		utils.Check(err)
+		if err != nil {
+            return nil, nil, err
+        }
 
 		n = new(big.Int).Mul(p, q)
 		phiN = getPhi(p, q)
@@ -52,7 +64,11 @@ func generatePrimePair(bits int) (n, phiN *big.Int) {
 
 func GenerateKeyPair(bits int) (privateKey *PrivateKey, err error) {
 
-	n, lambda := generatePrimePair(bits)
+	n, lambda, err := generatePrimePair(bits)
+    if err != nil {
+        return nil, err
+    }
+
     mu := getMu(lambda, n)
     generator := new(big.Int).Add(n, one)
 
@@ -91,10 +107,19 @@ func getPhi(a, b *big.Int) (phi *big.Int) {
 	return phi
 }
 
-func Encrypt(m *big.Int, key *PublicKey) (c *big.Int) {
+func Encrypt(m *big.Int, key *PublicKey) (c *big.Int, err error) {
+
+    if m == nil {
+        return nil, InvalidPlaintextError
+    }
+    if key == nil {
+        return nil, InvalidEncryptionKeyError
+    }
 
     r, err := rand.Int(rand.Reader, key.N)
-    utils.Check(err)
+    if err != nil {
+        return nil, err
+    }
 
     // c = ((g^m).(r^n)) mod (n^2)
     c = new(big.Int).Mod(
@@ -102,10 +127,17 @@ func Encrypt(m *big.Int, key *PublicKey) (c *big.Int) {
                 new(big.Int).Exp(key.Generator, m, key.NSquared),
                 new(big.Int).Exp(r, key.N, key.NSquared)), key.NSquared)
 
-	return c
+	return c, err
 }
 
-func Decrypt(c *big.Int, key *PrivateKey) (m *big.Int) {
+func Decrypt(c *big.Int, key *PrivateKey) (m *big.Int, err error) {
+
+    if c == nil {
+        return nil, InvalidCiphertextError
+    }
+    if key == nil {
+        return nil, InvalidDecryptionKeyError
+    }
 
     // m = L(c^lambda mod n^2).mu mod n
     // where L(x) = (x-1)/n
@@ -114,5 +146,5 @@ func Decrypt(c *big.Int, key *PrivateKey) (m *big.Int) {
 	m.Mul(m, key.Mu)
 	m.Mod(m, key.PublicKey.N)
 
-	return m
+	return m, err
 }
