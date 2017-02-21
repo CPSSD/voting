@@ -37,7 +37,7 @@ func (key *PublicKey) Encrypt(m *big.Int) (c *big.Int, err error) {
 	if m == nil {
 		return nil, InvalidPlaintextError
 	}
-	if err = key.validate(); err != nil {
+	if err = key.Validate(); err != nil {
 		return nil, err
 	}
 
@@ -60,7 +60,7 @@ func (key *PrivateKey) Decrypt(c *big.Int) (m *big.Int, err error) {
 	if c == nil {
 		return nil, InvalidCiphertextError
 	}
-	if err = key.validate(); err != nil {
+	if err = key.Validate(); err != nil {
 		return nil, err
 	}
 
@@ -96,23 +96,23 @@ func GenerateKeyPair(bits int) (privateKey *PrivateKey, err error) {
 		Mu:     mu,
 	}
 
-	err = privateKey.validate()
+	err = privateKey.Validate()
 
 	return
 }
 
-func (key *PrivateKey) validate() (err error) {
+func (key *PrivateKey) Validate() (err error) {
 
 	if key == nil || key.Mu == nil || key.Lambda == nil {
 		return InvalidPrivateKeyError
 	}
-	if err = key.PublicKey.validate(); err != nil {
+	if err = key.PublicKey.Validate(); err != nil {
 		return err
 	}
 	return
 }
 
-func (key *PublicKey) validate() (err error) {
+func (key *PublicKey) Validate() (err error) {
 	if key == nil || key.N == nil ||
 		key.NSquared == nil || key.Generator == nil {
 

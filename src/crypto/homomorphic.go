@@ -12,7 +12,7 @@ func (key *PrivateKey) AddCipherTexts(ciphertexts ...*big.Int) (total *big.Int, 
 // Accepts one or more ciphertexts and homomorphically sums them
 func (key *PublicKey) AddCipherTexts(ciphertexts ...*big.Int) (total *big.Int, err error) {
 
-    if err = key.validate(); err != nil {
+    if err = key.Validate(); err != nil {
         return nil, err
     }
 
