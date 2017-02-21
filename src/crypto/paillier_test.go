@@ -1,8 +1,8 @@
-package utils_test
+package crypto_test
 
 import (
 	"fmt"
-	"github.com/CPSSD/voting/src/utils"
+	"github.com/CPSSD/voting/src/crypto"
 	"testing"
 )
 
@@ -24,7 +24,7 @@ func TestSimpleTest(t *testing.T) {
 func CheckPaillier() (success bool, err error) {
 
     // if the file doesn't exist, the test will pass
-    err = utils.EncryptFile("simple-non-existant-file")
+    err = crypto.EncryptFile("simple-non-existant-file")
     return false, err
 
 }
