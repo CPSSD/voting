@@ -3,8 +3,8 @@ package main
 import (
 	"crypto/rand"
 	"fmt"
-    "github.com/CPSSD/voting/src/utils"
 	"github.com/CPSSD/voting/src/crypto"
+	"github.com/CPSSD/voting/src/utils"
 	"math/big"
 )
 
@@ -20,11 +20,11 @@ func main() {
 
 	fmt.Println("\nplaintext:", plaintext, "\n")
 
-	ciphertext, _ := crypto.Encrypt(plaintext, &priv.PublicKey)
+	ciphertext, _ := priv.Encrypt(plaintext)
 
 	fmt.Println("\nciphertext:", ciphertext, "\n")
 
-	deciphered, _ := crypto.Decrypt(ciphertext, priv)
+	deciphered, _ := priv.Decrypt(ciphertext)
 
 	fmt.Println("\ndeciphered:", deciphered, "\n")
 
