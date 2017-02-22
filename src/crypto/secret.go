@@ -1,7 +1,6 @@
 package crypto
 
 import (
-    "fmt"
     "math/big"
     "strings"
     "crypto/rand"
@@ -72,14 +71,9 @@ func DivideSecret(secret *big.Int, threshold, shares int) (secrets []Secret, err
 
     }
 
-    fmt.Println("Polynomial is:",poly)
-
     for i := int64(1); i <= int64(shares); i++ {
         secrets = append(secrets, Secret{big.NewInt(i), poly.solve(big.NewInt(i))})
     }
-
-    fmt.Println("Secrets are:",secrets)
-
 
     // Using the polynomial, construct n shares
     // of the secret. Constructing a share involves
