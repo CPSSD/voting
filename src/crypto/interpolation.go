@@ -4,7 +4,13 @@ import (
 	"math/big"
 )
 
-func Interpolate(points []Secret, prime *big.Int) (secret *big.Int, err error) {
+// Interpolate takes a Share slice and a prime modulus,
+// and interpolates the shares to create a polynomial.
+// It returns a secret value = f(0) for the constructed
+// polynomial. If the amount of shares used is not
+// greater than or equal to the original threshold for
+// the polynomial, the returned secret will not be correct.
+func Interpolate(points []Share, prime *big.Int) (secret *big.Int, err error) {
 
 	secret = new(big.Int)
 
@@ -23,7 +29,11 @@ func Interpolate(points []Secret, prime *big.Int) (secret *big.Int, err error) {
 	return
 }
 
-func calculateProduct(j Secret, points []Secret, prime *big.Int) (product *big.Int) {
+// calculateProduct returns the the product from
+// m = 0, through all of the points where m != j,
+// for the following function:
+// xm /( xm - xj )
+func calculateProduct(j Share, points []Share, prime *big.Int) (product *big.Int) {
 
 	product = big.NewInt(1)
 

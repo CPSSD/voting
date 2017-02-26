@@ -79,5 +79,33 @@
     The value of ciphertext_sum, when decrypted, will be equal to the value
     of plaintext_a + plaintext_b mod N. To add ciphertexts, the key used
     can be either the public or private key.
+
+    Secret sharing
+
+    Secret sharing of a *big.Int can be performed as follows:
+
+        secret := big.NewInt(1234)
+        threshold := 18
+        numShares := 20
+        shares, prime, err := crypto.DivideSecret(secret, threshold, numShares)
+
+    The contents of the slice shares should be distributed amongst users of the
+    system. The ratio of threshold:numShares will determine the security vs
+    redundancy of the system. The value of prime should be made public to allow
+    the reconstruction of the polynomial.
+
+    Interpolation
+
+    Shares can be interpolated to reconstruct a secret as follows. Given:
+
+        var collaboratorShares []Share
+
+    containing a set of shares greater than the required threshold,
+    and the prime modulus from the secret sharing step:
+
+        secret, err := crypto.Interpolate(collaboratorShares, prime)
+
+    If the amount of shares used is not at least equal to the threshold,
+    then the value of secret will not be correct.
 */
 package crypto

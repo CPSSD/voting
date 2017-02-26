@@ -15,23 +15,34 @@ var (
 
 var one = big.NewInt(1)
 
+// PrivateKey contains the private components Lambda and Mu,
+// and the public components in PublicKey.
 type PrivateKey struct {
 	Lambda *big.Int
 	Mu     *big.Int
 	PublicKey
 }
 
+// PublicKey contains the public components N, NSquared and
+// Generator.
 type PublicKey struct {
 	N         *big.Int
 	NSquared  *big.Int
 	Generator *big.Int
 }
 
+// Encrypt returns the ciphertext c which is created by
+// encrypting the message m with the PublicKey associated
+// with PrivateKey key. The encryption of a given message
+// m is non-deterministic.
 func (key *PrivateKey) Encrypt(m *big.Int) (c *big.Int, err error) {
 	c, err = key.PublicKey.Encrypt(m)
 	return
 }
 
+// Encrypt returns the ciphertext c which is created by
+// encrypting the message m with the PrivateKey key. The
+// encryption of a given message m is non-deterministic.
 func (key *PublicKey) Encrypt(m *big.Int) (c *big.Int, err error) {
 
 	if m == nil {
@@ -55,6 +66,13 @@ func (key *PublicKey) Encrypt(m *big.Int) (c *big.Int, err error) {
 	return c, err
 }
 
+// Decrypt returns the message m which is obtained from
+// decrypting the ciphertext c using PrivateKey key. If
+// a nil ciphertext is passed to this function, an
+// InvalidCiphertextError will be returned along with a
+// nil value for m.
+// If an invalid key is used, a corresponding error will
+// be returned with a nil value for m.
 func (key *PrivateKey) Decrypt(c *big.Int) (m *big.Int, err error) {
 
 	if c == nil {
@@ -74,6 +92,10 @@ func (key *PrivateKey) Decrypt(c *big.Int) (m *big.Int, err error) {
 	return m, err
 }
 
+// GenerateKeyPair returns a PrivateKey struct containing the
+// private components of a key-pair and the corresponding
+// PublicKey struct. The value bits determines the size of
+// prime numbers to be used in the generation of the key-pair.
 func GenerateKeyPair(bits int) (privateKey *PrivateKey, err error) {
 
 	n, lambda, err := generatePrimePair(bits)
@@ -101,6 +123,10 @@ func GenerateKeyPair(bits int) (privateKey *PrivateKey, err error) {
 	return
 }
 
+// Validate returns an InvalidPrivateKeyError if the
+// key is nil, or if the values of Mu or Lambda are nil.
+// If the PublicKey is invalid an InvalidPublicKeyError
+// will be returned, else nil is returned.
 func (key *PrivateKey) Validate() (err error) {
 
 	if key == nil || key.Mu == nil || key.Lambda == nil {
@@ -112,6 +138,10 @@ func (key *PrivateKey) Validate() (err error) {
 	return
 }
 
+
+// Validate returns an InvalidPublicKeyError if the key
+// is nil, or if the values of N, NSquared or Generator
+// are nil, else nil is returned.
 func (key *PublicKey) Validate() (err error) {
 	if key == nil || key.N == nil ||
 		key.NSquared == nil || key.Generator == nil {
@@ -121,6 +151,9 @@ func (key *PublicKey) Validate() (err error) {
 	return
 }
 
+// generatePrimePair returns n and phiN, where n = p.q,
+// and phiN = (p-1).(q-1), and p and q are primes
+// with a length specified by the bits argument.
 func generatePrimePair(bits int) (n, phiN *big.Int, err error) {
 
 	gcd := new(big.Int)
@@ -146,18 +179,28 @@ func generatePrimePair(bits int) (n, phiN *big.Int, err error) {
 	return
 }
 
+// getMu returns the modular inverse of phi mod n,
+// and is used to generate the value Mu for a
+// PrivateKey.
 func getMu(phi, n *big.Int) (ans *big.Int) {
 
 	ans = new(big.Int).ModInverse(phi, n)
 	return ans
 }
 
+// getL returns the value of (x-1)/n. Note that this
+// performs a division, and not a multiplication of a
+// modular inverse. It is used during the decryption
+// of a ciphertext.
 func getL(x, n *big.Int) (ans *big.Int) {
 
 	ans = new(big.Int).Div(new(big.Int).Sub(x, one), n)
 	return ans
 }
 
+// getPhi returns the result of the totient function
+// on two primes a and b. It is used to calculate
+// phi(n), where n = p.q.
 func getPhi(a, b *big.Int) (phi *big.Int) {
 
 	x := new(big.Int).Sub(a, one)

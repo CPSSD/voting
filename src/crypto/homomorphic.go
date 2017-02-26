@@ -4,12 +4,17 @@ import (
 	"math/big"
 )
 
+// AddCipherTexts returns the encrypted sum of the
+// individual ciphertexts. Calling this function using
+// a PrivateKey will result in the function being called
+// for the PublicKey.
 func (key *PrivateKey) AddCipherTexts(ciphertexts ...*big.Int) (total *big.Int, err error) {
 	total, err = key.PublicKey.AddCipherTexts(ciphertexts...)
 	return
 }
 
-// Accepts one or more ciphertexts and homomorphically sums them
+// AddCipherTexts accepts one or more ciphertexts
+// and returns the homomorphic sums of them.
 func (key *PublicKey) AddCipherTexts(ciphertexts ...*big.Int) (total *big.Int, err error) {
 
 	if err = key.Validate(); err != nil {

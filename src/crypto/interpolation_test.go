@@ -64,13 +64,13 @@ func CheckAltInterpolation() (success bool, err error) {
 	secret := big.NewInt(1234)
 	mod := big.NewInt(1613)
 
-	var points = []crypto.Secret{
-		crypto.Secret{X: big.NewInt(1), Y: big.NewInt(1494)},
-		crypto.Secret{X: big.NewInt(2), Y: big.NewInt(329)},
-		crypto.Secret{X: big.NewInt(3), Y: big.NewInt(965)},
-		crypto.Secret{X: big.NewInt(4), Y: big.NewInt(176)},
-		crypto.Secret{X: big.NewInt(5), Y: big.NewInt(1188)},
-		crypto.Secret{X: big.NewInt(6), Y: big.NewInt(775)},
+	var points = []crypto.Share{
+		crypto.Share{X: big.NewInt(1), Y: big.NewInt(1494)},
+		crypto.Share{X: big.NewInt(2), Y: big.NewInt(329)},
+		crypto.Share{X: big.NewInt(3), Y: big.NewInt(965)},
+		crypto.Share{X: big.NewInt(4), Y: big.NewInt(176)},
+		crypto.Share{X: big.NewInt(5), Y: big.NewInt(1188)},
+		crypto.Share{X: big.NewInt(6), Y: big.NewInt(775)},
 	}
 
 	recovered, err := crypto.Interpolate(points, mod)
@@ -144,9 +144,9 @@ func CheckInterpolation(threshold, shares, collaborators int) (success bool, err
 	}
 }
 
-func randomSlice(num int, in []crypto.Secret) (out []crypto.Secret) {
+func randomSlice(num int, in []crypto.Share) (out []crypto.Share) {
 
-	slice := append([]crypto.Secret(nil), in...)
+	slice := append([]crypto.Share(nil), in...)
 
 	rand.Seed(time.Now().UnixNano())
 	num = int(math.Min(float64(num), float64(len(slice))))
