@@ -9,7 +9,7 @@ func TestSecretSharing(t *testing.T) {
 
 	success, err := CheckSecretSharing()
 	if !success {
-		t.Error("Expected ",!success,"got",success,"with err",err,"\n")
+		t.Error("Expected ", !success, "got", success, "with err", err, "\n")
 	}
 }
 
@@ -20,10 +20,10 @@ func CheckSecretSharing() (success bool, err error) {
 		return false, err
 	}
 
-    _, _, err = crypto.DivideSecret(priv.Lambda, 2, 2)
-    if err != nil {
-        return false, err
-    }
+	_, _, err = crypto.DivideSecret(priv.Lambda, 2, 2)
+	if err != nil {
+		return false, err
+	}
 
-    return true, err
+	return true, err
 }
