@@ -20,7 +20,7 @@ func CheckSecretSharing() (success bool, err error) {
 		return false, err
 	}
 
-    _, err = crypto.DivideSecret(priv.Lambda, 2, 2)
+    _, _, err = crypto.DivideSecret(priv.Lambda, 2, 2)
     if err != nil {
         return false, err
     }

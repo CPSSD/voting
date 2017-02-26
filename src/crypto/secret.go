@@ -48,14 +48,14 @@ func (m Monomial) solve(x *big.Int) (y *big.Int) {
 }
 
 //   dividesecret( S    ,    k   ,       n        )
-func DivideSecret(secret *big.Int, threshold, shares int) (secrets []Secret, err error) {
+func DivideSecret(secret *big.Int, threshold, shares int) (secrets []Secret, prime *big.Int, err error) {
 
     // we need k total parts for reconstruction, so
     // we will use s, and k-1 extra parts.
     // Construct the polynomial of k-1 degrees here
 
     // generate a prime P > s
-    prime, _ := rand.Prime(rand.Reader, 60 + secret.BitLen())
+    prime, _ = rand.Prime(rand.Reader, 1 + secret.BitLen())
 
     poly := Polynomial{
         Monomials: []Monomial{{secret, new(big.Int)}},
@@ -65,14 +65,15 @@ func DivideSecret(secret *big.Int, threshold, shares int) (secrets []Secret, err
     for i := int64(1); i <= int64(threshold); i++ {
         value, err := rand.Int(rand.Reader, prime)
         if err != nil {
-            return nil, err
+            return nil, nil, err
         }
         poly.Monomials = append(poly.Monomials, Monomial{value, big.NewInt(i)})
 
     }
 
     for i := int64(1); i <= int64(shares); i++ {
-        secrets = append(secrets, Secret{big.NewInt(i), poly.solve(big.NewInt(i))})
+        yVal := poly.solve(big.NewInt(i))
+        secrets = append(secrets, Secret{big.NewInt(i), new(big.Int).Mod(yVal, prime)})
     }
 
     // Using the polynomial, construct n shares
