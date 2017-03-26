@@ -14,7 +14,7 @@ type Transaction struct {
 	Header    TransactionHeader
 	Ballot    []byte
 	Signature []byte
-	proof     []byte
+	Proof     [32]byte
 }
 
 type TransactionHeader struct {
@@ -25,7 +25,17 @@ type TransactionHeader struct {
 	Nonce      uint32   // the incremented value for proof of work
 }
 
-func New(token, ballot []byte) (t *Transaction) {
+func (t Transaction) String() (str string) {
+	str = str + "\n // Time:          " + fmt.Sprint(t.Header.Timestamp)
+	str = str + "\n // Proof of Work: " + hex.EncodeToString(t.Proof[:5]) + "..."
+	str = str + "\n // Ballot:        " + hex.EncodeToString(t.Ballot)
+	str = str + "\n // Vote Token:    " + hex.EncodeToString(t.Header.VoteToken)
+	str = str + "\n // Nonce:         " + fmt.Sprint(t.Header.Nonce)
+	str = str + "\n"
+	return str
+}
+
+func NewTransaction(token, ballot []byte) (t *Transaction) {
 	t = &Transaction{
 		Header: TransactionHeader{
 			VoteToken: token,
@@ -41,7 +51,7 @@ func New(token, ballot []byte) (t *Transaction) {
 	return t
 }
 
-func (t *Transaction) createProof(prefixLen int) (proof uint32) {
+func (t *Transaction) createProof(prefixLen int) (nonce uint32) {
 
 	// We need the first prefixLen characters of the hex
 	// representation of hash(t) to be equal to 0 for our proof
@@ -63,7 +73,8 @@ func (t *Transaction) createProof(prefixLen int) (proof uint32) {
 		hash := sha256.Sum256(data)
 		if checkProof(prefix, prefixLen, hash) {
 			s := hex.EncodeToString(hash[:])
-			fmt.Printf("Nonce: %v\nHash: %s\n\n", altT.Header.Nonce, s)
+			fmt.Printf("\rNonce: %v\nHash: %s\n\n", altT.Header.Nonce, s)
+			t.Proof = hash
 			break
 		}
 		altT.Header.Nonce++

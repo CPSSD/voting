@@ -1,6 +1,7 @@
 package blockchain
 
 var (
-	blockSize       = 10
-	proofDifficulty = 4
+	blockSize         = 4
+	proofDifficultyTr = 2
+	proofDifficultyBl = 2
 )

@@ -1,11 +1,11 @@
 package blockchain
 
 import (
-	"fmt"
+	"strconv"
 )
 
 type Chain struct {
-	head   Block
+	head   *Block
 	blocks []Block
 }
 
@@ -14,7 +14,14 @@ func NewChain() (c *Chain, err error) {
 		head:   NewBlock(),
 		blocks: make([]Block, 0),
 	}
-	return c
+	return c, nil
+}
+
+func (c Chain) String() (str string) {
+	for i, b := range c.blocks {
+		str = str + "Block " + strconv.Itoa(i) + ": \b" + b.String() + "\n"
+	}
+	return "Chain:\n " + str
 }
 
 // CreateProof is a function for RPC. It should be called
@@ -28,12 +35,13 @@ func (c *Chain) AddTransaction(tr *Transaction, _ *struct{}) (err error) {
 	}
 
 	// if we haven't, create proof
-	tr.createProof(3)
+	tr.createProof(proofDifficultyTr)
 
 	// then add tr to a block
 	c.addTransaction(tr)
 
 	return
+
 }
 
 // Chain.addTransaction will add a transaction to the
@@ -41,8 +49,17 @@ func (c *Chain) AddTransaction(tr *Transaction, _ *struct{}) (err error) {
 // be appended to the chain and cleared for re-use.
 func (c *Chain) addTransaction(tr *Transaction) {
 	if isFull := c.head.addTransaction(tr); isFull {
-		blocks := append(blocks, head)
-		c.head = c.head[:0]
+
+		if len(c.blocks) != 0 {
+			c.head.Header.ParentHash = c.blocks[len(c.blocks)-1].Proof
+		} else {
+			c.head.Header.ParentHash = *new([32]byte)
+		}
+
+		c.head.createProof(proofDifficultyBl)
+
+		c.blocks = append(c.blocks, *c.head)
+		c.head = NewBlock()
 	}
 }
 
