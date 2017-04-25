@@ -1,31 +1,83 @@
 package main
 
 import (
-	"crypto/rand"
 	"fmt"
-	"github.com/CPSSD/voting/src/crypto"
-	"github.com/CPSSD/voting/src/utils"
-	"math/big"
+	"github.com/CPSSD/voting/src/blockchain"
+	"os"
+	"sync"
+)
+
+var (
+	tokenMsg    string = "Please enter your unique token"
+	ballotMsg   string = "Please enter your ballot message"
+	badInputMsg string = "Unrecognised input"
+	waitMsg     string = "Waiting for processes to quit"
 )
 
 func main() {
 
-	priv, err := crypto.GenerateKeyPair(1024)
-	utils.Check(err)
+	c, err := blockchain.NewChain()
+	if err != nil {
+		panic(err)
+	}
 
-	upperBound := big.NewInt(10000000000)
+	fmt.Println("Setting up network config")
+	filename := string(os.Args[1])
 
-	plaintext, err := rand.Int(rand.Reader, upperBound)
-	utils.Check(err)
+	c.Init(filename)
 
-	fmt.Println("\nplaintext:", plaintext, "\n")
+	quit := make(chan bool, 1)
+	var syncDelay int = 10
+	var wg sync.WaitGroup
+	wg.Add(2)
+	c.Start(syncDelay, quit, &wg)
 
-	ciphertext, _ := priv.Encrypt(plaintext)
+loop:
+	for {
+		fmt.Printf("What next? (h for help): ")
+		var input string
+		fmt.Scanf("%v\n", &input)
 
-	fmt.Println("\nciphertext:", ciphertext, "\n")
+		switch input {
+		case "h":
+			fmt.Printf("\th\t\tPrint this help\n")
+			fmt.Printf("\tp\t\tPrint known peers\n")
+			fmt.Printf("\tsp\t\tSave current peer list\n")
+			fmt.Printf("\tv\t\tCast a vote\n")
+			fmt.Printf("\tq\t\tQuit program\n")
+		case "p":
+			c.PrintPeers()
+		case "sp":
+			fmt.Printf("\tEnter file name to save to: ")
+			fmt.Scanf("%v\n", &input)
+			c.SavePeers(input)
+		case "q":
+			quit <- true
+			break loop
+		case "v":
+			var tokenStr string
+			var ballotStr string
 
-	deciphered, _ := priv.Decrypt(ciphertext)
+			fmt.Printf("%s: ", tokenMsg)
+			fmt.Scanf("%v\n", &tokenStr)
+			fmt.Printf("%s: ", ballotMsg)
+			fmt.Scanf("%v\n", &ballotStr)
 
-	fmt.Println("\ndeciphered:", deciphered, "\n")
+			token := []byte("Token" + tokenStr)
+			ballot := []byte("Ballot" + ballotStr)
 
+			tr := blockchain.NewTransaction(token, ballot)
+
+			go c.SendTransaction(tr)
+		default:
+			fmt.Println(badInputMsg)
+		}
+
+	}
+
+	fmt.Printf("%v\n", waitMsg)
+	wg.Wait()
+	fmt.Println("\n\n\nDONE\n\n\n")
+	fmt.Println(c)
+	fmt.Println("\n\n\nDONE\n\n\n")
 }

@@ -1,1 +1,8 @@
-{"MyAddr":"localhost","MyPort":":8102","IsMaster":false,"Master":"localhost:8092","Message":"I am the beta node","Lock":{},"Peers":{}}
+{
+    "MyAddr": "localhost",
+    "MyPort": ":8102",
+    "Lock": {},
+    "Peers": {
+        "localhost:8092": true
+    }
+}

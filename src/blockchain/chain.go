@@ -1,19 +1,27 @@
 package blockchain
 
 import (
+	"fmt"
 	"strconv"
+	"sync"
+	"time"
 )
 
 type Chain struct {
-	head   *Block
-	blocks []Block
+	TransactionPool chan []Transaction
+	head            *Block
+	blocks          []Block
+	conf            Configuration
 }
 
 func NewChain() (c *Chain, err error) {
 	c = &Chain{
-		head:   NewBlock(),
-		blocks: make([]Block, 0),
+		TransactionPool: make(chan []Transaction, 1),
+		head:            NewBlock(),
+		blocks:          make([]Block, 0),
 	}
+	pool := make([]Transaction, 0)
+	c.TransactionPool <- pool
 	return c, nil
 }
 
@@ -27,21 +35,93 @@ func (c Chain) String() (str string) {
 // CreateProof is a function for RPC. It should be called
 // by a client who wishes to broadcast a vote to peers on
 // the network.
+
 func (c *Chain) AddTransaction(tr *Transaction, _ *struct{}) (err error) {
 
 	// have we seen this tr?
 	if c.contains(tr) {
+		fmt.Printf("We have seen this transaction already:\n%s\n", tr.String())
 		return
 	}
 
-	// if we haven't, create proof
-	tr.createProof(proofDifficultyTr)
+	// if we haven't, add it to the pool
+	//c.TransactionPool <- tr
+
+	// create proof
+	// tr.createProof(proofDifficultyTr)
 
 	// then add tr to a block
-	c.addTransaction(tr)
+	// c.addTransaction(tr)
 
 	return
 
+}
+
+func (c *Chain) Start(delay int, quit chan bool, w *sync.WaitGroup) {
+
+	// be updating peers
+	go func(syncDelay int, quit chan bool, wg *sync.WaitGroup) {
+		timer := time.NewTimer(time.Second)
+	loop:
+		for {
+			select {
+			case <-quit:
+				quit <- true
+				wg.Done()
+				break loop
+			case <-timer.C:
+				go func() {
+					c.syncPeers()
+				}()
+				timer = time.NewTimer(time.Second * time.Duration(syncDelay))
+
+			}
+		}
+	}(delay, quit, w)
+
+	// be processing transactions
+	go func(quit chan bool, wg *sync.WaitGroup) {
+	loop:
+		for {
+			select {
+			case <-quit:
+				quit <- true
+				wg.Done()
+				break loop
+			case pool := <-c.TransactionPool:
+				if len(pool) >= blockSize {
+					c.TransactionPool <- pool[blockSize:]
+				} else {
+					c.TransactionPool <- pool
+					break
+				}
+				blockPool := pool[:blockSize]
+				fmt.Println("Computing tr hashes")
+				for _, tr := range blockPool {
+					tr.createProof(proofDifficultyTr)
+					c.head.addTransaction(&tr)
+				}
+				if len(c.blocks) != 0 {
+					c.head.Header.ParentHash = c.blocks[len(c.blocks)-1].Proof
+				} else {
+					c.head.Header.ParentHash = *new([32]byte)
+				}
+
+				fmt.Println("Computing block hash")
+				// create the proof for the chain
+				c.head.createProof(proofDifficultyBl)
+				// add it to our chain
+				c.blocks = append(c.blocks, *c.head)
+
+				// send the block to our peers
+				// c.sendBlock(*c.head)
+
+				// clear the head block
+				c.head = NewBlock()
+				fmt.Println("Done hashing")
+			}
+		}
+	}(quit, w)
 }
 
 // Chain.addTransaction will add a transaction to the
@@ -50,15 +130,25 @@ func (c *Chain) AddTransaction(tr *Transaction, _ *struct{}) (err error) {
 func (c *Chain) addTransaction(tr *Transaction) {
 	if isFull := c.head.addTransaction(tr); isFull {
 
+		// The block is full, so let us:
+
+		// link it to the previous block in the chain
 		if len(c.blocks) != 0 {
 			c.head.Header.ParentHash = c.blocks[len(c.blocks)-1].Proof
 		} else {
 			c.head.Header.ParentHash = *new([32]byte)
 		}
 
+		// create the proof for the chain
 		c.head.createProof(proofDifficultyBl)
 
+		// add it to our chain
 		c.blocks = append(c.blocks, *c.head)
+
+		// send the block to our peers
+		//c.sendBlock(*c.head)
+
+		// clear the head block
 		c.head = NewBlock()
 	}
 }

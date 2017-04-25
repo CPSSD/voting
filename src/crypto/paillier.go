@@ -138,7 +138,6 @@ func (key *PrivateKey) Validate() (err error) {
 	return
 }
 
-
 // Validate returns an InvalidPublicKeyError if the key
 // is nil, or if the values of N, NSquared or Generator
 // are nil, else nil is returned.

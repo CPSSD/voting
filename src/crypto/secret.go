@@ -74,18 +74,17 @@ func (m monomial) solve(x *big.Int) (y *big.Int) {
 // the shares into the correct polynomial.
 func DivideSecret(secret *big.Int, k, m int) (shares []Share, prime *big.Int, err error) {
 
-
 	// generate a prime P > s
 	prime, _ = rand.Prime(rand.Reader, 1+secret.BitLen())
 
-    // We need k total parts for reconstruction, so
-    // we will use s as the first monomial, and k-1 extra parts.
+	// We need k total parts for reconstruction, so
+	// we will use s as the first monomial, and k-1 extra parts.
 	poly := polynomial{
 		monomials: []monomial{{secret, new(big.Int)}},
 	}
 
 	for i := int64(1); i < int64(k); i++ {
-        // select ai where a < P, s < P
+		// select ai where a < P, s < P
 		value, err := rand.Int(rand.Reader, prime)
 		if err != nil {
 			return nil, nil, err
@@ -93,14 +92,13 @@ func DivideSecret(secret *big.Int, k, m int) (shares []Share, prime *big.Int, er
 		poly.monomials = append(poly.monomials, monomial{value, big.NewInt(i)})
 	}
 
-    // Using the polynomial, construct n shares
-    // of the secret. Constructing a share involves
-    // soling the polynimial for x to get the point (x, y)
+	// Using the polynomial, construct n shares
+	// of the secret. Constructing a share involves
+	// soling the polynimial for x to get the point (x, y)
 	for i := int64(1); i <= int64(m); i++ {
 		yVal := poly.solve(big.NewInt(i))
 		shares = append(shares, Share{big.NewInt(i), new(big.Int).Mod(yVal, prime)})
 	}
-
 
 	// Return the set of shares.
 	return
