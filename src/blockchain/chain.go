@@ -5,10 +5,13 @@ import (
 	"strconv"
 	"sync"
 	"time"
+    "reflect"
 )
 
 type Chain struct {
 	TransactionPool chan []Transaction
+    TransactionReady chan bool
+    CurrentTransactions chan []Transaction
 	head            *Block
 	blocks          []Block
 	conf            Configuration
@@ -16,12 +19,15 @@ type Chain struct {
 
 func NewChain() (c *Chain, err error) {
 	c = &Chain{
-		TransactionPool: make(chan []Transaction, 1),
+        TransactionPool: make(chan []Transaction, 1),
+		TransactionReady: make(chan bool, 1),
+        CurrentTransactions: make(chan []Transaction, 1),
 		head:            NewBlock(),
 		blocks:          make([]Block, 0),
 	}
 	pool := make([]Transaction, 0)
-	c.TransactionPool <- pool
+    c.TransactionPool <- pool
+	c.CurrentTransactions <- pool
 	return c, nil
 }
 
@@ -57,7 +63,7 @@ func (c *Chain) AddTransaction(tr *Transaction, _ *struct{}) (err error) {
 
 }
 
-func (c *Chain) Start(delay int, quit chan bool, w *sync.WaitGroup) {
+func (c *Chain) Start(delay int, quit, stop chan bool, w *sync.WaitGroup) {
 
 	// be updating peers
 	go func(syncDelay int, quit chan bool, wg *sync.WaitGroup) {
@@ -79,8 +85,8 @@ func (c *Chain) Start(delay int, quit chan bool, w *sync.WaitGroup) {
 		}
 	}(delay, quit, w)
 
-	// be processing transactions
-	go func(quit chan bool, wg *sync.WaitGroup) {
+	// be processing transactions aka making blocks
+	go func(quit, stop chan bool, wg *sync.WaitGroup) {
 	loop:
 		for {
 			select {
@@ -88,16 +94,23 @@ func (c *Chain) Start(delay int, quit chan bool, w *sync.WaitGroup) {
 				quit <- true
 				wg.Done()
 				break loop
-			case pool := <-c.TransactionPool:
-				if len(pool) >= blockSize {
-					c.TransactionPool <- pool[blockSize:]
-				} else {
-					c.TransactionPool <- pool
-					break
+			case <- c.TransactionReady:
+                fmt.Println("Transaction ready")
+                pool := <- c.TransactionPool
+                _ = <- c.CurrentTransactions
+
+				if len(pool[blockSize:]) >= blockSize {
+                    c.TransactionReady <- true
 				}
-				blockPool := pool[:blockSize]
+
+                c.TransactionPool <- pool[blockSize:]
+                c.CurrentTransactions <- pool[:blockSize]
+
+                blockPool := pool[:blockSize]
+
 				fmt.Println("Computing tr hashes")
-				for _, tr := range blockPool {
+
+                for _, tr := range blockPool {
 					tr.createProof(proofDifficultyTr)
 					c.head.addTransaction(&tr)
 				}
@@ -108,50 +121,80 @@ func (c *Chain) Start(delay int, quit chan bool, w *sync.WaitGroup) {
 				}
 
 				fmt.Println("Computing block hash")
+
+                start := time.Now()
 				// create the proof for the chain
-				c.head.createProof(proofDifficultyBl)
-				// add it to our chain
-				c.blocks = append(c.blocks, *c.head)
+                stopped := c.head.createProof(proofDifficultyBl, stop)
+
+                elapsed := time.Since(start)
+                fmt.Printf("Block hash took %s\n", elapsed)
+
+                if stopped {
+    				c.head = NewBlock()
+                    tp := <- c.TransactionPool
+                    _ = <- c.CurrentTransactions
+
+                    for _, t := range blockPool {
+                        inPool := false
+                        for _, tr := range tp {
+                    		if reflect.DeepEqual(t.Header.VoteToken, tr.Header.VoteToken) {
+                    			inPool = true
+                    			break
+                    		}
+                    	}
+                    	if inPool || c.contains(&t) {
+                    		continue
+                    	}
+                        tp = append(tp, t)
+                    }
+
+                    c.TransactionPool <- tp
+                    c.CurrentTransactions <- make([]Transaction, 0)
+                    fmt.Println("Block hashing interrupted")
+                } else {
+                    c.blocks = append(c.blocks, *c.head)
+    				c.head = NewBlock()
+                    fmt.Println("Done hashing")
+                }
+
 
 				// send the block to our peers
 				// c.sendBlock(*c.head)
 
 				// clear the head block
-				c.head = NewBlock()
-				fmt.Println("Done hashing")
 			}
 		}
-	}(quit, w)
+	}(quit, stop, w)
 }
 
 // Chain.addTransaction will add a transaction to the
 // head of the chain. If the head is then full, it will
 // be appended to the chain and cleared for re-use.
-func (c *Chain) addTransaction(tr *Transaction) {
-	if isFull := c.head.addTransaction(tr); isFull {
-
-		// The block is full, so let us:
-
-		// link it to the previous block in the chain
-		if len(c.blocks) != 0 {
-			c.head.Header.ParentHash = c.blocks[len(c.blocks)-1].Proof
-		} else {
-			c.head.Header.ParentHash = *new([32]byte)
-		}
-
-		// create the proof for the chain
-		c.head.createProof(proofDifficultyBl)
-
-		// add it to our chain
-		c.blocks = append(c.blocks, *c.head)
-
-		// send the block to our peers
-		//c.sendBlock(*c.head)
-
-		// clear the head block
-		c.head = NewBlock()
-	}
-}
+// func (c *Chain) addTransaction(tr *Transaction) {
+// 	if isFull := c.head.addTransaction(tr); isFull {
+//
+// 		// The block is full, so let us:
+//
+// 		// link it to the previous block in the chain
+// 		if len(c.blocks) != 0 {
+// 			c.head.Header.ParentHash = c.blocks[len(c.blocks)-1].Proof
+// 		} else {
+// 			c.head.Header.ParentHash = *new([32]byte)
+// 		}
+//
+// 		// create the proof for the chain
+// 		c.head.createProof(proofDifficultyBl)
+//
+// 		// add it to our chain
+// 		c.blocks = append(c.blocks, *c.head)
+//
+// 		// send the block to our peers
+// 		//c.sendBlock(*c.head)
+//
+// 		// clear the head block
+// 		c.head = NewBlock()
+// 	}
+// }
 
 // TODO: check the chain in reverse order ie. most
 // recent blocks first: hypothesis is that if a

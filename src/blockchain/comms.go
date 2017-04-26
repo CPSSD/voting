@@ -20,20 +20,40 @@ type Configuration struct {
 
 func (c *Chain) ReceiveTransaction(t *Transaction, _ *struct{}) (err error) {
 	pool := <-c.TransactionPool
+    ctrs := <-c.CurrentTransactions
 	inPool := false
-	for _, tr := range pool {
-		if reflect.DeepEqual(t.Header.VoteToken, tr.Header.VoteToken) {
-			inPool = true
-			break
-		}
-	}
+    for _, tr := range ctrs {
+        if reflect.DeepEqual(t.Header.VoteToken, tr.Header.VoteToken) {
+            inPool = true
+            break
+        }
+    }
+    if !inPool {
+        for _, tr := range pool {
+    		if reflect.DeepEqual(t.Header.VoteToken, tr.Header.VoteToken) {
+    			inPool = true
+    			break
+    		}
+    	}
+    }
 	if inPool || c.contains(t) {
 		c.TransactionPool <- pool
+        c.CurrentTransactions <- ctrs
 		return
 	}
 
 	pool = append(pool, *t)
 	c.TransactionPool <- pool
+    c.CurrentTransactions <- ctrs
+
+    if len(pool) >= blockSize {
+        select {
+        case <- c.TransactionReady:
+            c.TransactionReady <- true
+        default:
+            c.TransactionReady <- true
+        }
+    }
 
 	go c.SendTransaction(t)
 	return
@@ -49,12 +69,16 @@ func (c *Chain) SendTransaction(tr *Transaction) {
 		if k == c.conf.MyAddr+c.conf.MyPort {
 			continue
 		}
-		fmt.Println(c.conf.MyPort + ": sending transaction to -> " + k)
+		//fmt.Println(c.conf.MyPort + ": sending transaction to -> " + k)
 		conn, err := rpc.DialHTTP("tcp", k)
 		if err != nil {
 			continue
 		}
-		conn.Go("Chain.ReceiveTransaction", tr, nil, nil)
+		go func() {
+            trCall := conn.Go("Chain.ReceiveTransaction", tr, nil, nil)
+            _ = <-trCall.Done
+            conn.Close()
+        }()
 	}
 
 	return
@@ -80,6 +104,7 @@ func (c *Chain) syncPeers() {
 		c.conf.Lock.RLock()
 		err = conn.Call("Chain.GetPeers", c.conf.Peers, &newPeers)
 		c.conf.Lock.RUnlock()
+        conn.Close()
 		if err != nil {
 			continue
 		}
@@ -101,6 +126,15 @@ func (c *Chain) PrintPeers() {
 	for k, _ := range peers {
 		fmt.Printf("\t%v\n", k)
 	}
+}
+
+func (c *Chain) PrintPool() {
+
+    pool := <- c.TransactionPool
+    c.TransactionPool <- pool
+    for _, tr := range pool {
+        fmt.Println(tr)
+    }
 }
 
 func (c *Chain) GetPeers(myPeers *map[string]bool, r *map[string]bool) error {

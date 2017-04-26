@@ -27,10 +27,11 @@ func main() {
 	c.Init(filename)
 
 	quit := make(chan bool, 1)
+	stop := make(chan bool, 1)
 	var syncDelay int = 10
 	var wg sync.WaitGroup
 	wg.Add(2)
-	c.Start(syncDelay, quit, &wg)
+	c.Start(syncDelay, quit, stop, &wg)
 
 loop:
 	for {
@@ -41,19 +42,28 @@ loop:
 		switch input {
 		case "h":
 			fmt.Printf("\th\t\tPrint this help\n")
-			fmt.Printf("\tp\t\tPrint known peers\n")
+            fmt.Printf("\tpeers\t\tPrint known peers\n")
+			fmt.Printf("\tpool\t\tPrint pool of transactions\n")
+            fmt.Printf("\tchain\t\tPrint current chain\n")
 			fmt.Printf("\tsp\t\tSave current peer list\n")
 			fmt.Printf("\tv\t\tCast a vote\n")
-			fmt.Printf("\tq\t\tQuit program\n")
-		case "p":
+            fmt.Printf("\tq\t\tQuit program\n")
+			fmt.Printf("\tb\t\tBlock interrupt\n")
+        case "peers":
 			c.PrintPeers()
+        case "pool":
+			c.PrintPool()
+        case "chain":
+			fmt.Println(c)
 		case "sp":
 			fmt.Printf("\tEnter file name to save to: ")
 			fmt.Scanf("%v\n", &input)
 			c.SavePeers(input)
-		case "q":
+        case "q":
 			quit <- true
 			break loop
+        case "b":
+            stop <- true
 		case "v":
 			var tokenStr string
 			var ballotStr string

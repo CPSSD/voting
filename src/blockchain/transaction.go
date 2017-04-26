@@ -28,8 +28,8 @@ type TransactionHeader struct {
 func (t Transaction) String() (str string) {
 	str = str + "\n // Time:          " + fmt.Sprint(t.Header.Timestamp)
 	str = str + "\n // Proof of Work: " + hex.EncodeToString(t.Proof[:5]) + "..."
-	str = str + "\n // Ballot:        " + hex.EncodeToString(t.Ballot)
-	str = str + "\n // Vote Token:    " + hex.EncodeToString(t.Header.VoteToken)
+	str = str + "\n // Ballot:        " + string(t.Ballot[:])
+	str = str + "\n // Vote Token:    " + string(t.Header.VoteToken[:])
 	str = str + "\n // Nonce:         " + fmt.Sprint(t.Header.Nonce)
 	str = str + "\n"
 	return str

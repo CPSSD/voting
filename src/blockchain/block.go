@@ -50,7 +50,7 @@ func (b *Block) addTransaction(t *Transaction) (isFull bool) {
 	return len(b.transactions) == cap(b.transactions)
 }
 
-func (b *Block) createProof(prefixLen int) (nonce uint32) {
+func (b *Block) createProof(prefixLen int, stop chan bool) (stopped bool) {
 
 	merkle := b.MerkleHash()
 
@@ -59,25 +59,31 @@ func (b *Block) createProof(prefixLen int) (nonce uint32) {
 
 	b.Header.Timestamp = uint32(time.Now().Unix())
 
-	for {
-		var data []byte
-		var buf bytes.Buffer
-		enc := gob.NewEncoder(&buf)
-		err := enc.Encode(&altB.Header)
-		if err != nil {
-			panic(err)
-		}
+    loop:
+    for {
+        select {
+        case <-stop:
+            return true
+        default:
+    		var data []byte
+    		var buf bytes.Buffer
+    		enc := gob.NewEncoder(&buf)
+    		err := enc.Encode(&altB.Header)
+    		if err != nil {
+    			panic(err)
+    		}
 
-		data = append(merkle, buf.Bytes()...)
+    		data = append(merkle, buf.Bytes()...)
 
-		hash := sha256.Sum256(data)
-		if checkProof(prefix, prefixLen, hash) {
-			b.Proof = hash
-			break
-		}
-		altB.Header.Nonce++
+    		hash := sha256.Sum256(data)
+    		if checkProof(prefix, prefixLen, hash) {
+    			b.Proof = hash
+    			break loop
+    		}
+    		altB.Header.Nonce++
+        }
 	}
-	return altB.Header.Nonce
+	return false
 }
 
 func (b *Block) MerkleHash() (hash []byte) {
