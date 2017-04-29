@@ -5,7 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/gob"
 	"encoding/hex"
-	"fmt"
+	// "fmt"
 	"strings"
 	"time"
 )
@@ -26,12 +26,12 @@ type TransactionHeader struct {
 }
 
 func (t Transaction) String() (str string) {
-	str = str + "\n // Time:          " + fmt.Sprint(t.Header.Timestamp)
-	str = str + "\n // Proof of Work: " + hex.EncodeToString(t.Proof[:5]) + "..."
+	// str = str + "\n // Time:          " + fmt.Sprint(t.Header.Timestamp)
+	// str = str + "\n // Proof of Work: " + hex.EncodeToString(t.Proof[:5]) + "..."
 	str = str + "\n // Ballot:        " + string(t.Ballot[:])
 	str = str + "\n // Vote Token:    " + string(t.Header.VoteToken[:])
-	str = str + "\n // Nonce:         " + fmt.Sprint(t.Header.Nonce)
-	str = str + "\n"
+	// str = str + "\n // Nonce:         " + fmt.Sprint(t.Header.Nonce)
+	// str = str + "\n"
 	return str
 }
 
@@ -72,8 +72,6 @@ func (t *Transaction) createProof(prefixLen int) (nonce uint32) {
 
 		hash := sha256.Sum256(data)
 		if checkProof(prefix, prefixLen, hash) {
-			s := hex.EncodeToString(hash[:])
-			fmt.Printf("\rNonce: %v\nHash: %s\n\n", altT.Header.Nonce, s)
 			t.Proof = hash
 			break
 		}

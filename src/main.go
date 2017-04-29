@@ -5,6 +5,7 @@ import (
 	"github.com/CPSSD/voting/src/blockchain"
 	"os"
 	"sync"
+    "log"
 )
 
 var (
@@ -16,22 +17,42 @@ var (
 
 func main() {
 
+    f, err := os.OpenFile(os.Args[1]+".log", os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
+    if err != nil {
+        panic(err)
+    }
+    defer f.Close()
+
+    log.SetOutput(f)
+    log.SetFlags(log.Ltime|log.Lmicroseconds|log.Lshortfile)
+
 	c, err := blockchain.NewChain()
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println("Setting up network config")
+	log.Println("Setting up network config")
 	filename := string(os.Args[1])
 
 	c.Init(filename)
 
-	quit := make(chan bool, 1)
+    // to quit entirely
+    quit := make(chan bool, 1)
+
+    // to signal to stop mining
 	stop := make(chan bool, 1)
+
+    // to signal to start mining
+	start := make(chan bool, 1)
+
+    // to signal to confirm stopped mining
+	confirm := make(chan bool, 1)
+
 	var syncDelay int = 10
 	var wg sync.WaitGroup
-	wg.Add(2)
-	c.Start(syncDelay, quit, stop, &wg)
+	wg.Add(3)
+	c.Start(syncDelay, quit, stop, start, confirm, &wg)
+    start <- true
 
 loop:
 	for {
@@ -42,28 +63,30 @@ loop:
 		switch input {
 		case "h":
 			fmt.Printf("\th\t\tPrint this help\n")
-            fmt.Printf("\tpeers\t\tPrint known peers\n")
+			fmt.Printf("\tpeers\t\tPrint known peers\n")
 			fmt.Printf("\tpool\t\tPrint pool of transactions\n")
-            fmt.Printf("\tchain\t\tPrint current chain\n")
+			fmt.Printf("\tchain\t\tPrint current chain\n")
 			fmt.Printf("\tsp\t\tSave current peer list\n")
 			fmt.Printf("\tv\t\tCast a vote\n")
-            fmt.Printf("\tq\t\tQuit program\n")
+			fmt.Printf("\tq\t\tQuit program\n")
 			fmt.Printf("\tb\t\tBlock interrupt\n")
-        case "peers":
+		case "peers":
 			c.PrintPeers()
-        case "pool":
+		case "pool":
 			c.PrintPool()
-        case "chain":
+		case "chain":
+            fmt.Println("Entering print chain")
 			fmt.Println(c)
+            fmt.Println("Exited print chain")
 		case "sp":
 			fmt.Printf("\tEnter file name to save to: ")
 			fmt.Scanf("%v\n", &input)
 			c.SavePeers(input)
-        case "q":
+		case "q":
 			quit <- true
 			break loop
-        case "b":
-            stop <- true
+		case "b":
+			stop <- true
 		case "v":
 			var tokenStr string
 			var ballotStr string
@@ -73,12 +96,12 @@ loop:
 			fmt.Printf("%s: ", ballotMsg)
 			fmt.Scanf("%v\n", &ballotStr)
 
-			token := []byte("Token" + tokenStr)
-			ballot := []byte("Ballot" + ballotStr)
+			token := []byte(tokenStr)
+			ballot := []byte(ballotStr)
 
 			tr := blockchain.NewTransaction(token, ballot)
 
-			go c.SendTransaction(tr)
+			go c.ReceiveTransaction(tr, nil)
 		default:
 			fmt.Println(badInputMsg)
 		}
@@ -87,7 +110,8 @@ loop:
 
 	fmt.Printf("%v\n", waitMsg)
 	wg.Wait()
-	fmt.Println("\n\n\nDONE\n\n\n")
-	fmt.Println(c)
-	fmt.Println("\n\n\nDONE\n\n\n")
+	fmt.Println("\nDONE\n")
+    fmt.Println(c)
+	log.Println(c)
+	fmt.Println("\nDONE\n")
 }
