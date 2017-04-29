@@ -3,7 +3,7 @@ package blockchain
 import (
 	"bytes"
 	"crypto/sha256"
-	"encoding/gob"
+	"encoding/json"
 	"encoding/hex"
 	"reflect"
 	"strconv"
@@ -66,7 +66,7 @@ loop:
 		default:
 			var data []byte
 			var buf bytes.Buffer
-			enc := gob.NewEncoder(&buf)
+			enc := json.NewEncoder(&buf)
 			err := enc.Encode(&altB.Header)
 			if err != nil {
 				panic(err)
@@ -128,7 +128,7 @@ func (bl *Block) validate(parent [32]byte) (isValid bool, hash [32]byte){
 
     var data []byte
     var buf bytes.Buffer
-    enc := gob.NewEncoder(&buf)
+    enc := json.NewEncoder(&buf)
     err := enc.Encode(&tmpBl.Header)
     if err != nil {
         return false, hash
