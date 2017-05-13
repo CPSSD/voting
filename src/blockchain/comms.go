@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net"
 	"net/http"
 	"net/rpc"
@@ -18,107 +19,89 @@ type Configuration struct {
 
 func (c *Chain) ReceiveTransaction(t *Transaction, _ *struct{}) (err error) {
 	pool := <-c.TransactionPool
-    seen := <-c.SeenTrs
+	seen := <-c.SeenTrs
 
-    // if the tr was seen in our chain, then don't add it
-    if _, ok := seen[string(t.Header.VoteToken[:])]; ok {
-        c.SeenTrs <- seen
-        c.TransactionPool <- pool
-        return nil
-    }
+	// if the tr was seen in our chain, then don't add it
+	if _, ok := seen[string(t.Header.VoteToken[:])]; ok {
+		c.SeenTrs <- seen
+		c.TransactionPool <- pool
+		return nil
+	}
 
-    // if the tr is in our pool, don't add it
+	// if the tr is in our pool, don't add it
 	for _, tr := range pool {
 		if reflect.DeepEqual(t.Header.VoteToken, tr.Header.VoteToken) {
-            c.SeenTrs <- seen
-            c.TransactionPool <- pool
+			c.SeenTrs <- seen
+			c.TransactionPool <- pool
 			return nil
 		}
 	}
 
-    // else add it
+	log.Println("We received a new transaction")
 	pool = append(pool, *t)
-    c.SeenTrs <- seen
-    c.TransactionPool <- pool
+	c.SeenTrs <- seen
+	c.TransactionPool <- pool
 
-    // send it
-    go c.SendTransaction(t)
+	go c.SendTransaction(t)
 
-    return nil
+	return nil
 }
 
 type ChainUpdate struct {
-    Blocks []Block
-    //SeenTrs []string
+	Blocks []Block
+	//SeenTrs []string
 }
 
 func (c *Chain) getChainUpdateFrom(peer string) (altChain *[]Block, err error) {
-    conn, err := rpc.DialHTTP("tcp", peer)
-    if err != nil {
-        fmt.Println("c.getChainUpdateFrom:",peer,"error with HTTP:")
-        fmt.Println(err)
-        return altChain, err
-    }
-    empty := true
-    altChain = new([]Block)
-    err = conn.Call("Chain.GetChain", empty, &altChain)
-    if err != nil {
-        fmt.Println("c.getChainUpdateFrom:",peer,"error with RPC:")
-        fmt.Println(altChain)
-        fmt.Println(err)
-        return altChain, err
-    }
-    conn.Close()
-    return altChain, err
+	conn, err := rpc.DialHTTP("tcp", peer)
+	if err != nil {
+		return altChain, err
+	}
+	empty := true
+	altChain = new([]Block)
+	err = conn.Call("Chain.GetChain", empty, &altChain)
+	if err != nil {
+		return altChain, err
+	}
+	conn.Close()
+	return altChain, err
 }
 
 func (c *Chain) GetChain(empty bool, altChain *[]Block) error {
-    b := <- c.blocks
-    c.blocks <- b
-    // smap := <- c.SeenTrs
-    // c.SeenTrs <- s
-    //
-    // sarr := make([]string, 0, len(s))
-    // for tr, seen := range smap {
-    //     if seen {
-    //         sarr = append(sarr, tr)
-    //     }
-    // }
+	b := <-c.blocks
+	c.blocks <- b
 
-    *altChain = b
-    // altChain.SeenTrs = sarr
-
-    return nil
+	*altChain = b
+	return nil
 }
 
 type BlockUpdate struct {
-    LatestBlock Block
-    Peer        string
-    ChainLength uint32
+	LatestBlock Block
+	Peer        string
+	ChainLength uint32
 }
 
 func (c *Chain) ReceiveBlockUpdate(blu *BlockUpdate, _ *struct{}) (err error) {
 
-    fmt.Println("c.ReceiveBlockUpdate: writing to c.BlockUpdate...")
+	log.Println("Received block update, writing to respective channel")
 	c.BlockUpdate <- *blu
-    fmt.Println("c.ReceiveBlockUpdate: wrote to c.BlockUpdate")
 	return
 }
 
 func (c *Chain) sendBlock(bl *Block) {
 
-    fmt.Println("c.sendBlock: sending block to peers...")
-    peers := <- c.Peers
-    c.Peers <- peers
-    blocks := <- c.blocks
-    c.blocks <- blocks
-    update := &BlockUpdate{
-        LatestBlock: *bl,
-        Peer:        c.conf.MyAddr+c.conf.MyPort,
-        ChainLength: uint32(len(blocks)),
-    }
+	log.Println("Sending block to peers")
+	peers := <-c.Peers
+	c.Peers <- peers
+	blocks := <-c.blocks
+	c.blocks <- blocks
+	update := &BlockUpdate{
+		LatestBlock: *bl,
+		Peer:        c.conf.MyAddr + c.conf.MyPort,
+		ChainLength: uint32(len(blocks)),
+	}
 
-    for k, _ := range peers {
+	for k, _ := range peers {
 		if k == c.conf.MyAddr+c.conf.MyPort {
 			continue
 		}
@@ -128,19 +111,19 @@ func (c *Chain) sendBlock(bl *Block) {
 			continue
 		}
 		go func() {
-    		blCall := conn.Go("Chain.ReceiveBlockUpdate", update, nil, nil)
+			blCall := conn.Go("Chain.ReceiveBlockUpdate", update, nil, nil)
 			_ = <-blCall.Done
-    		conn.Close()
+			conn.Close()
 		}()
 	}
-    fmt.Println("c.sendBlock: done sending to peers")
+	log.Println("Done sending block to peers")
 	return
 }
 
 func (c *Chain) SendTransaction(tr *Transaction) {
 
-    fmt.Println("c.SendTransaction: sending to peers")
-    peers := <- c.Peers
+	log.Println("Sending transaction to peers")
+	peers := <-c.Peers
 
 	for k, _ := range peers {
 		if k == c.conf.MyAddr+c.conf.MyPort {
@@ -158,14 +141,16 @@ func (c *Chain) SendTransaction(tr *Transaction) {
 		}()
 	}
 
-    c.Peers <- peers
-    fmt.Println("c.SendTransaction: done sending to peers")
+	c.Peers <- peers
+	log.Println("Done sending transaction to peers")
 	return
 }
 
 func (c *Chain) syncPeers() {
 
-	peers := <- c.Peers
+	log.Println("Syncing peer list with peers")
+
+	peers := <-c.Peers
 	c.Peers <- peers
 
 	for k, _ := range peers {
@@ -177,27 +162,25 @@ func (c *Chain) syncPeers() {
 			continue
 		}
 
-
 		var newPeers map[string]bool
 
 		err = conn.Call("Chain.GetPeers", peers, &newPeers)
-        conn.Close()
+		conn.Close()
 		if err != nil {
-            fmt.Println("Error getting peers")
 			continue
 		}
 
-        _ = <- c.Peers
-        c.Peers <- newPeers
+		_ = <-c.Peers
+		c.Peers <- newPeers
 	}
-
+	log.Println("Done syncing peer list with peers")
 	return
 }
 
 func (c *Chain) PrintPeers() {
 
-    peers := <- c.Peers
-    c.Peers <- peers
+	peers := <-c.Peers
+	c.Peers <- peers
 
 	fmt.Printf("Peers:\n")
 	for k, _ := range peers {
@@ -216,45 +199,48 @@ func (c *Chain) PrintPool() {
 
 func (c *Chain) GetPeers(myPeers *map[string]bool, r *map[string]bool) error {
 
-	peers := <- c.Peers
+	peers := <-c.Peers
 
-    for key, _ := range *myPeers {
+	for key, _ := range *myPeers {
 		peers[key] = true
 	}
 	*r = peers
-    c.Peers <- peers
+	c.Peers <- peers
 
 	return nil
 }
 
 func (c *Chain) SavePeers(filename string) {
-    bl:= <- c.blocks
-    c.blocks <- bl
+	log.Println("Saving peer list to disk")
+	bl := <-c.blocks
+	c.blocks <- bl
 	bytes, err := json.Marshal(bl)
 	err = ioutil.WriteFile(filename, bytes, 0777)
 	if err != nil {
-		panic(err)
+		log.Println("Could not save peer list to disk")
+		log.Println(err)
 	}
 }
 
 func (c *Chain) addPeer(p string) {
-    peers := <- c.Peers
+	peers := <-c.Peers
 	peers[p] = true
-    c.Peers <- peers
+	c.Peers <- peers
 }
 
 func (c *Chain) Init(filename string) (err error) {
 
+	log.Println("Reading configuration file")
 	bs, err := ioutil.ReadFile(filename)
 	if err != nil {
-		panic(err)
+		log.Fatalln(err)
 	}
 
 	err = json.Unmarshal(bs, &c.conf)
 	if err != nil {
-		panic(err)
+		log.Fatalln(err)
 	}
-    c.Peers <- c.conf.Peers
+	c.Peers <- c.conf.Peers
 	c.addPeer(c.conf.MyAddr + c.conf.MyPort)
 
 	rpc.Register(c)
@@ -262,7 +248,7 @@ func (c *Chain) Init(filename string) (err error) {
 
 	ln, err := net.Listen("tcp", c.conf.MyPort)
 	if err != nil {
-		panic(err)
+		log.Fatalln(err)
 	}
 
 	go http.Serve(ln, nil)

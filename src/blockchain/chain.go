@@ -1,19 +1,18 @@
 package blockchain
 
 import (
-	"fmt"
+	"log"
 	"strconv"
 	"sync"
 	"time"
-    "log"
 )
 
 type Chain struct {
-    Peers               chan map[string]bool
+	Peers               chan map[string]bool
 	TransactionPool     chan []Transaction
 	TransactionsReady   chan []Transaction
 	CurrentTransactions chan []Transaction
-    BlockUpdate         chan BlockUpdate
+	BlockUpdate         chan BlockUpdate
 	SeenTrs             chan map[string]bool
 	head                *Block
 	blocks              chan []Block
@@ -21,13 +20,12 @@ type Chain struct {
 }
 
 func NewChain() (c *Chain, err error) {
-    log.Println("This is chain printing to the log")
 	c = &Chain{
-        Peers:               make(chan map[string]bool, 1),
+		Peers:               make(chan map[string]bool, 1),
 		TransactionPool:     make(chan []Transaction, 1),
 		TransactionsReady:   make(chan []Transaction, 1),
 		CurrentTransactions: make(chan []Transaction, 1),
-        BlockUpdate:         make(chan BlockUpdate, 1),
+		BlockUpdate:         make(chan BlockUpdate, 1),
 		SeenTrs:             make(chan map[string]bool, 1),
 		head:                NewBlock(),
 		blocks:              make(chan []Block, 1),
@@ -36,8 +34,8 @@ func NewChain() (c *Chain, err error) {
 	c.TransactionPool <- pool
 	seenTrs := make(map[string]bool, 0)
 	c.SeenTrs <- seenTrs
-    blocks := make([]Block, 0)
-    c.blocks <- blocks
+	blocks := make([]Block, 0)
+	c.blocks <- blocks
 	return c, nil
 }
 
@@ -56,10 +54,12 @@ loop:
 	for {
 		select {
 		case <-quit:
+			log.Println("Peer syncing process received signal to shutdown")
 			quit <- true
 			wg.Done()
 			break loop
 		case <-timer.C:
+			log.Println("About to sync peers")
 			c.syncPeers()
 			timer = time.NewTimer(time.Second * time.Duration(syncDelay))
 		}
@@ -81,48 +81,62 @@ func (c *Chain) removeSeenTransactions(trs []Transaction, seen map[string]bool) 
 }
 
 func (c *Chain) scheduleMining(quit, stopMining, startMining, confirmStopped chan bool, wg *sync.WaitGroup) {
-    timer := time.NewTimer(time.Second)
+	timer := time.NewTimer(time.Second)
 start:
-fmt.Println("c.scheduleMining: Waiting to start mining")
 
-// wait for the signal to start mining
-    _ = <- startMining
-    fmt.Println("c.scheduleMining: Got signal to start mining")
+	log.Println("Waiting for the signal to start mining")
+	_ = <-startMining
+	log.Println("Got the signal, about to start mining")
 
 loop:
 	for {
 		select {
-        default:
-            _ = <-timer.C
-            pool := <- c.TransactionPool
-            if len(pool) >= blockSize {
-                c.TransactionsReady <- pool[:blockSize]
-                c.TransactionPool <- pool[blockSize:]
-            } else {
-                c.TransactionPool <- pool
-            }
-            timer = time.NewTimer(time.Second * time.Duration(3))
+
+		default:
+			// By default, we wait for timer to expire, then we will check
+			// to see if there are enough transactions in the pool that we
+			// can create a block from.
+			_ = <-timer.C
+
+			// Get the pool and see if it is longer than the constant blockSize
+			pool := <-c.TransactionPool
+			if len(pool) >= blockSize {
+				// if so, we will put blockSize worth of transactions into
+				// the TransactionsReady channel, and replace the rest of the
+				// transactions
+				c.TransactionsReady <- pool[:blockSize]
+				c.TransactionPool <- pool[blockSize:]
+			} else {
+				c.TransactionPool <- pool
+			}
+			// Reset the timer
+			timer = time.NewTimer(time.Second * time.Duration(hashingDelay))
+
 		case <-quit:
+			log.Println("Mining process received signal to shutdown")
 			quit <- true
 			wg.Done()
 			break loop
-        case <-stopMining:
-            c.CurrentTransactions <- make([]Transaction, 0)
-            confirmStopped <- true
-            goto start
-		case blockPool := <- c.TransactionsReady:
 
-            // make a backup in case we need to stop mining
-            tmpTrs := blockPool
+		case <-stopMining:
+			log.Println("Mining process received signal to stop activities")
+			c.CurrentTransactions <- make([]Transaction, 0)
+			confirmStopped <- true
+			goto start
 
-            for _, tr := range blockPool {
+		case blockPool := <-c.TransactionsReady:
+			log.Println("We have enough transactions to create a block")
+			// make a backup in case we need to stop mining
+			tmpTrs := blockPool
+
+			for _, tr := range blockPool {
 				tr.createProof(proofDifficultyTr)
 				c.head.addTransaction(&tr)
-                // TODO: change this to signing the transactions
+				// TODO: change this to signing the transactions
 			}
 
 			blocks := <-c.blocks
-            c.blocks <- blocks
+			c.blocks <- blocks
 
 			if len(blocks) != 0 {
 				c.head.Header.ParentHash = blocks[len(blocks)-1].Proof
@@ -131,51 +145,36 @@ loop:
 			}
 
 			// compute block hash until created or stopped by new longest chain
-            fmt.Println("c.scheduleMining: Working on a hash")
 			stopped := c.head.createProof(proofDifficultyBl, stopMining)
-            fmt.Println("c.scheduleMining: Finished hashing ")
 
 			if stopped {
-                fmt.Println("c.scheduleMining: We were stopped")
-                fmt.Println("c.scheduleMining: writing current trs to c.CurrentTransactions")
 
+				log.Println("Mining process received signal to stop activities")
 
-                // notify what transactions we were working with
-                c.CurrentTransactions <- tmpTrs
-
-                fmt.Println("c.scheduleMining: clearing head")
-
-                // clear our head block
+				// notify what transactions we were working with
+				c.CurrentTransactions <- tmpTrs
 				c.head = NewBlock()
+				confirmStopped <- true
 
-                fmt.Println("c.scheduleMining: saying we have stopped ")
-
-
-                // let the rest of the program know we have stopped mining
-                confirmStopped <- true
-                fmt.Println("c.scheduleMining: said we have stopped, going to start")
-
-                goto start
-
-                // tp := <-c.TransactionPool
-                // updatedPool := c.consolidateTransactions(tp, tmpTrs)
-				// ctrs := <-c.CurrentTransactions
+				goto start
 
 			} else {
 
-                // otherwise broadcast our new block to the network
-                fmt.Println("c.scheduleMining: We created a block")
+				log.Println("Mining process created a block")
+
 				seenTrs := <-c.SeenTrs
 				for _, tr := range c.head.Transactions {
 					seenTrs[string(tr.Header.VoteToken[:])] = true
 				}
 				c.SeenTrs <- seenTrs
-                blocks := <- c.blocks
+
+				blocks := <-c.blocks
 				c.blocks <- append(blocks, *c.head)
-                bl := *c.head
+
+				bl := *c.head
 				c.head = NewBlock()
-                fmt.Println("c.scheduleMining: We are going to send the block")
-                go c.sendBlock(&bl)
+
+				go c.sendBlock(&bl)
 			}
 		}
 	}
@@ -186,12 +185,15 @@ loop:
 func (c *Chain) Start(delay int, quit, stop, start, confirm chan bool, w *sync.WaitGroup) {
 
 	// check for new peers every "delay" seconds
+	log.Println("Starting peer syncing process...")
 	go c.schedulePeerSync(delay, quit, w)
 
 	// be processing transactions aka making blocks
+	log.Println("Starting mining process...")
 	go c.scheduleMining(quit, stop, start, confirm, w)
 
 	// be ready to process new blocks and consensus forming
+	log.Println("Starting chain management process...")
 	go c.scheduleChainUpdates(quit, stop, start, confirm, w)
 }
 
@@ -200,141 +202,115 @@ loop:
 	for {
 		select {
 		case <-quit:
+			log.Println("Chain update process received signal to shutdown")
 			quit <- true
 			wg.Done()
 			break loop
+
 		case blu := <-c.BlockUpdate:
-            fmt.Println("c.scheduleChainUpdates: Handling block update")
-            fmt.Println(blu.LatestBlock)
+			log.Println("Handling block update")
 
 			blocks := <-c.blocks
-            c.blocks <- blocks
-            newBlocks := append(blocks, blu.LatestBlock)
-            fmt.Println("c.scheduleChainUpdates: Checking if this is the next block in chain...")
+			c.blocks <- blocks
+			newBlocks := append(blocks, blu.LatestBlock)
 
-            // validate the proposed new chain
-            valid, seen := c.validate(&newBlocks)
+			// validate the proposed new chain
+			valid, seen := c.validate(&newBlocks)
 
-            if valid {
-                fmt.Println("c.scheduleChainUpdates: Received next block in the chain")
-            }
+			if valid {
 
-            // if it was not the next block in a sequence, it could be from
-            // a new longer chain
-            if !valid && blu.ChainLength > uint32(len(blocks)) {
+				log.Println("Update contains valid next block")
 
-                fmt.Println("c.scheduleChainUpdates: Not next block in chain")
-                fmt.Println("c.scheduleChainUpdates: Possible new longer chain of len",blu.ChainLength, "compared to",uint32(len(blocks)))
+			} else if !valid && blu.ChainLength > uint32(len(blocks)) {
 
-                // get the claimed chain
-                fmt.Println("c.scheduleChainUpdates: Getting alt chain...")
-                altChain, err := c.getChainUpdateFrom(blu.Peer)
-                if err != nil {
-                    fmt.Println("c.scheduleChainUpdates: Error getting alt chain!")
-                    continue
-                }
+				log.Println("Possible new longer chain;", blu.ChainLength, "vs", uint32(len(blocks)))
+				log.Println("Getting alt chain")
+				altChain, err := c.getChainUpdateFrom(blu.Peer)
+				if err != nil {
+					log.Println("There was a problem getting the alt chain")
+					continue
+				}
 
-                // make sure it is longer
-                fmt.Println("c.scheduleChainUpdates: Checking length of alt chain...")
-                if len(*altChain) < len(blocks) {
-                    fmt.Println("c.scheduleChainUpdates: Chain was not longer!")
-                    continue
-                }
+				// make sure it is longer
+				if len(*altChain) < len(blocks) {
+					log.Println("Alt chain is shorter")
+					continue
+				}
 
-                // validate the new chain
-                newBlocks = *altChain
-                fmt.Println("c.scheduleChainUpdates: Validating alt chain...")
+				// validate the new chain
+				newBlocks = *altChain
 
-                valid, seen = c.validate(altChain)
-                if valid {
-                    log.Println("c.scheduleChainUpdates: New longer valid chain received")
-                }
-            }
+				valid, seen = c.validate(altChain)
+				if valid {
+					log.Println("Alt chain is valid")
+				}
+			}
 
-            // if newBlocks is a valid chain...
-            if valid {
+			// if newBlocks is a valid chain...
+			if valid {
 
-                // tell the chain to stop mining
-                fmt.Println("c.scheduleChainUpdates: Telling to stop mining")
-                stopMining <- true
-                // confirm that it has stopped
-                fmt.Println("c.scheduleChainUpdates: Confirming stopped mining")
-                _ = <- confirmStopped
-                fmt.Println("c.scheduleChainUpdates: We have stopped mining")
+				log.Println("Sending signal to stop mining")
+				stopMining <- true
 
-                // set the new chain of blocks
-                fmt.Println("c.scheduleChainUpdates: Waiting to delete old blocks...")
-                _ = <- c.blocks
-                fmt.Println("c.scheduleChainUpdates: We are now writing new blocks")
-                c.blocks <- newBlocks
+				_ = <-confirmStopped
+				log.Println("We have stopped mining")
 
+				// set the new chain of blocks
+				_ = <-c.blocks
+				c.blocks <- newBlocks
 
-                // set the map of seen transactions (trs in valid blocks)
-                fmt.Println("c.scheduleChainUpdates: Waiting to delete old seen trs...")
-                _ = <- c.SeenTrs
-                fmt.Println("c.scheduleChainUpdates: We are now writing new seen trs")
-                c.SeenTrs <- seen
+				// set the new map of seen transactions
+				_ = <-c.SeenTrs
+				c.SeenTrs <- seen
 
-                // set the pool of transactions still to be mined
-                fmt.Println("c.scheduleChainUpdates: Waiting to copy tr pool...")
+				// set the new pool of transactions still to be mined
+				oldPool := <-c.TransactionPool
+				currentTrs := <-c.CurrentTransactions
 
-                oldPool := <- c.TransactionPool
+				// TODO: get the transactions from the old chain we would lose
 
-                fmt.Println("c.scheduleChainUpdates: Waiting to copy current trs...")
-                currentTrs := <- c.CurrentTransactions
+				allTrs := append(oldPool, currentTrs...)
+				newPool := c.removeSeenTransactions(allTrs, seen)
 
-                allTrs := append(oldPool, currentTrs...)
-                newPool := c.removeSeenTransactions(allTrs, seen)
+				c.TransactionPool <- newPool
 
-                fmt.Println("c.scheduleChainUpdates: We are now writing the new tr pool...")
-                c.TransactionPool <- newPool
+				go c.sendBlock(&blu.LatestBlock)
 
-
-                fmt.Println("c.scheduleChainUpdates: We wrote the new pool and are sending the update to peers")
-                go c.sendBlock(&blu.LatestBlock)
-                fmt.Println("c.scheduleChainUpdates: We have sent the update")
-
-
-                // we have finished making changes, so we can tell the
-                // chain to start mining again
-                fmt.Println("c.scheduleChainUpdates: We are informing to start mining again...")
-
-                startMining <- true
-                fmt.Println("c.scheduleChainUpdates: We have informed to start mining.")
-
-            } else {
-                fmt.Println("c.scheduleChainUpdates: Chain was not valid")
-
-            }
+				log.Println("Sending signal to start mining again")
+				startMining <- true
+			} else {
+				log.Println("Alt chain was not valid")
+			}
 		}
 	}
 }
 
 func (c *Chain) validate(blocks *[]Block) (valid bool, seen map[string]bool) {
 
-    seen = make(map[string]bool, 0)
-    parent := *new([32]byte)
+	seen = make(map[string]bool, 0)
+	parent := *new([32]byte)
 
-    for _, bl := range *blocks {
+	for _, bl := range *blocks {
 
-        // validate the transactions in the block
-        for _, tr := range bl.Transactions {
-            if _, ok := seen[string(tr.Header.VoteToken[:])]; ok {
-                return false, seen
-            }
-            seen[string(tr.Header.VoteToken[:])] = true
-            // TODO: should also verify signatures once implemented
-        }
+		// validate the transactions in the block
+		for _, tr := range bl.Transactions {
+			if _, ok := seen[string(tr.Header.VoteToken[:])]; ok {
+				log.Println("Invalid chain - duplicated transactions:", string(tr.Header.VoteToken[:]))
+				return false, seen
+			}
+			seen[string(tr.Header.VoteToken[:])] = true
+			// TODO: should also verify signatures once implemented
+		}
 
-        // verify the hash of the block
-        valid, hash := bl.validate(parent)
+		valid, hash := bl.validate(parent)
 
-        if !valid {
-            return false, seen
-        }
-        parent = hash
-    }
-    return true, seen
+		if !valid {
+			log.Println("Invalid chain - bad hash of block to parent")
+			return false, seen
+		}
+		parent = hash
+	}
+	return true, seen
 }
 
 // TODO: check the chain in reverse order ie. most

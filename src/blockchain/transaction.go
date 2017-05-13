@@ -5,7 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/gob"
 	"encoding/hex"
-	// "fmt"
+	"log"
 	"strings"
 	"time"
 )
@@ -66,7 +66,7 @@ func (t *Transaction) createProof(prefixLen int) (nonce uint32) {
 		enc := gob.NewEncoder(&b)
 		err := enc.Encode(&altT.Header)
 		if err != nil {
-			panic(err)
+			log.Fatalln(err)
 		}
 		data = b.Bytes()
 

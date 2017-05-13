@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 	"github.com/CPSSD/voting/src/blockchain"
+	"log"
 	"os"
 	"sync"
-    "log"
 )
 
 var (
@@ -17,14 +17,14 @@ var (
 
 func main() {
 
-    f, err := os.OpenFile(os.Args[1]+".log", os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
-    if err != nil {
-        panic(err)
-    }
-    defer f.Close()
+	f, err := os.OpenFile(os.Args[1]+".log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
 
-    log.SetOutput(f)
-    log.SetFlags(log.Ltime|log.Lmicroseconds|log.Lshortfile)
+	log.SetOutput(f)
+	log.SetFlags(log.Ltime | log.Lmicroseconds | log.Lshortfile)
 
 	c, err := blockchain.NewChain()
 	if err != nil {
@@ -36,23 +36,23 @@ func main() {
 
 	c.Init(filename)
 
-    // to quit entirely
-    quit := make(chan bool, 1)
+	// to quit entirely
+	quit := make(chan bool, 1)
 
-    // to signal to stop mining
+	// to signal to stop mining
 	stop := make(chan bool, 1)
 
-    // to signal to start mining
+	// to signal to start mining
 	start := make(chan bool, 1)
 
-    // to signal to confirm stopped mining
+	// to signal to confirm stopped mining
 	confirm := make(chan bool, 1)
 
 	var syncDelay int = 10
 	var wg sync.WaitGroup
 	wg.Add(3)
 	c.Start(syncDelay, quit, stop, start, confirm, &wg)
-    start <- true
+	start <- true
 
 loop:
 	for {
@@ -75,9 +75,9 @@ loop:
 		case "pool":
 			c.PrintPool()
 		case "chain":
-            fmt.Println("Entering print chain")
+			fmt.Println("Entering print chain")
 			fmt.Println(c)
-            fmt.Println("Exited print chain")
+			fmt.Println("Exited print chain")
 		case "sp":
 			fmt.Printf("\tEnter file name to save to: ")
 			fmt.Scanf("%v\n", &input)
@@ -109,9 +109,7 @@ loop:
 	}
 
 	fmt.Printf("%v\n", waitMsg)
+	log.Printf("%v\n", waitMsg)
 	wg.Wait()
-	fmt.Println("\nDONE\n")
-    fmt.Println(c)
 	log.Println(c)
-	fmt.Println("\nDONE\n")
 }

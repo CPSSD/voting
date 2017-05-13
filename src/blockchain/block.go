@@ -3,8 +3,9 @@ package blockchain
 import (
 	"bytes"
 	"crypto/sha256"
-	"encoding/json"
 	"encoding/hex"
+	"encoding/json"
+	"log"
 	"reflect"
 	"strconv"
 	"strings"
@@ -45,36 +46,38 @@ func (b Block) String() (str string) {
 }
 
 func (b *Block) addTransaction(t *Transaction) (isFull bool) {
+	log.Println("Adding transaction")
 	b.Transactions = append(b.Transactions, *t)
 	return len(b.Transactions) == cap(b.Transactions)
 }
 
 func (b *Block) createProof(prefixLen int, stop chan bool) (stopped bool) {
 
-	merkle := b.MerkleHash()
+	start := time.Now()
+	log.Println("Starting POW")
 
+	merkle := b.MerkleHash()
 	altB := b
 	prefix := strings.Repeat("0", prefixLen)
 
 	b.Header.Timestamp = uint32(time.Now().Unix())
-
+	data := make([]byte, 0)
+	hash := *new([32]byte)
 loop:
 	for {
 		select {
 		case <-stop:
+			log.Println("Interrupting POW after", time.Since(start))
 			return true
 		default:
-			var data []byte
 			var buf bytes.Buffer
 			enc := json.NewEncoder(&buf)
 			err := enc.Encode(&altB.Header)
 			if err != nil {
-				panic(err)
+				log.Fatalln(err)
 			}
-
 			data = append(merkle, buf.Bytes()...)
-
-			hash := sha256.Sum256(data)
+			hash = sha256.Sum256(data)
 			if checkProof(prefix, prefixLen, hash) {
 				b.Proof = hash
 				break loop
@@ -82,6 +85,10 @@ loop:
 			altB.Header.Nonce++
 		}
 	}
+	log.Println("Finishing POW, took", time.Since(start))
+
+	log.Println("Created data is:", hex.EncodeToString(data))
+	log.Println("Created hash is:", hex.EncodeToString(hash[:]))
 	return false
 }
 
@@ -110,36 +117,39 @@ func (b *Block) contains(t *Transaction) bool {
 	return false
 }
 
-func (bl *Block) validate(parent [32]byte) (isValid bool, hash [32]byte){
+func (bl *Block) validate(parent [32]byte) (isValid bool, hash [32]byte) {
 
-    prefixLen := proofDifficultyBl
-    prefix := strings.Repeat("0", prefixLen)
+	prefixLen := proofDifficultyBl
+	prefix := strings.Repeat("0", prefixLen)
 
-    merkle := merkleHash(bl.Transactions)
+	merkle := merkleHash(bl.Transactions)
 
-    tmpBl := &Block{
-        Header: BlockHeader{
-            MerkleHash: merkle,
-            ParentHash: parent,
-            Timestamp:  bl.Header.Timestamp,
-            Nonce:      bl.Header.Nonce,
-        },
-    }
+	tmpBl := &Block{
+		Header: BlockHeader{
+			MerkleHash: merkle,
+			ParentHash: parent,
+			Timestamp:  bl.Header.Timestamp,
+			Nonce:      bl.Header.Nonce,
+		},
+	}
 
-    var data []byte
-    var buf bytes.Buffer
-    enc := json.NewEncoder(&buf)
-    err := enc.Encode(&tmpBl.Header)
-    if err != nil {
-        return false, hash
-    }
+	var data []byte
+	var buf bytes.Buffer
+	enc := json.NewEncoder(&buf)
+	err := enc.Encode(&tmpBl.Header)
+	if err != nil {
+		return false, hash
+	}
 
-    data = append(merkle[:], buf.Bytes()...)
+	data = append(merkle[:], buf.Bytes()...)
+	log.Println("Recreated data is: ")
+	log.Println(hex.EncodeToString(data))
+	hash = sha256.Sum256(data)
+	log.Println("Recreated hash is: ")
+	log.Println(hex.EncodeToString(hash[:]))
+	if !checkProof(prefix, prefixLen, hash) || hash != bl.Proof {
+		return false, hash
+	}
 
-    hash = sha256.Sum256(data)
-    if !checkProof(prefix, prefixLen, hash) || hash != bl.Proof {
-        return false, hash
-    }
-
-    return true, hash
+	return true, hash
 }
