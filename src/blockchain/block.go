@@ -153,3 +153,12 @@ func (bl *Block) validate(parent [32]byte) (isValid bool, hash [32]byte) {
 
 	return true, hash
 }
+
+func extractTransactions(blocks *[]Block) *[]Transaction {
+	trs := make([]Transaction, len(*blocks)*blockSize)
+	var i int
+	for _, bl := range *blocks {
+		i += copy(trs[i:], bl.Transactions)
+	}
+	return &trs
+}

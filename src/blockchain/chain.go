@@ -256,7 +256,7 @@ loop:
 				log.Println("We have stopped mining")
 
 				// set the new chain of blocks
-				_ = <-c.blocks
+				oldBlocks := <-c.blocks
 				c.blocks <- newBlocks
 
 				// set the new map of seen transactions
@@ -267,10 +267,14 @@ loop:
 				oldPool := <-c.TransactionPool
 				currentTrs := <-c.CurrentTransactions
 
-				// TODO: get the transactions from the old chain we would lose
+				oldChainTrs := extractTransactions(&oldBlocks)
 
 				allTrs := append(oldPool, currentTrs...)
+				allTrs = append(allTrs, *oldChainTrs...)
+
 				newPool := c.removeSeenTransactions(allTrs, seen)
+
+                // TODO: broadcast new pool to peers (share workload)
 
 				c.TransactionPool <- newPool
 
