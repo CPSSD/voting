@@ -1,10 +1,13 @@
 package blockchain
 
 import (
+	"crypto/dsa"
 	"encoding/json"
 	"fmt"
+	"github.com/CPSSD/voting/src/crypto"
 	"io/ioutil"
 	"log"
+	"math/big"
 	"net"
 	"net/http"
 	"net/rpc"
@@ -12,9 +15,21 @@ import (
 )
 
 type Configuration struct {
-	MyAddr string
-	MyPort string
-	Peers  map[string]bool
+	MyAddr    string
+	MyPort    string
+	Peers     map[string]bool
+	SyncPeers bool
+
+	PrivateKey dsa.PrivateKey
+
+	VoteTokens map[string]dsa.PublicKey
+	MyToken    string
+
+	ElectionKey           crypto.PrivateKey
+	ElectionSecretLambda  crypto.Share
+	ElectionSecretMu      crypto.Share
+	ElectionLambdaModulus *big.Int
+	ElectionMuModulus     *big.Int
 }
 
 func (c *Chain) ReceiveTransaction(t *Transaction, _ *struct{}) (err error) {
