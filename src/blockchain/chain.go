@@ -70,10 +70,12 @@ loop:
 // occur in the map of seen transaction tokens
 func (c *Chain) removeSeenTransactions(trs []Transaction, seen map[string]bool) (out []Transaction) {
 
-	for _, val := range trs {
-		if _, ok := seen[string(val.Header.VoteToken[:])]; !ok {
-			out = append(out, val)
-			seen[string(val.Header.VoteToken[:])] = true
+	for _, tr := range trs {
+		if _, ok := seen[tr.Header.VoteToken]; !ok {
+			if valid := c.ValidateSignature(&tr); valid {
+				out = append(out, tr)
+				seen[tr.Header.VoteToken] = true
+			}
 		}
 	}
 
@@ -130,9 +132,8 @@ loop:
 			tmpTrs := blockPool
 
 			for _, tr := range blockPool {
-				tr.createProof(proofDifficultyTr)
+				// signatures have been verified before being added to the pool
 				c.head.addTransaction(&tr)
-				// TODO: change this to signing the transactions
 			}
 
 			blocks := <-c.blocks
@@ -164,7 +165,7 @@ loop:
 
 				seenTrs := <-c.SeenTrs
 				for _, tr := range c.head.Transactions {
-					seenTrs[string(tr.Header.VoteToken[:])] = true
+					seenTrs[tr.Header.VoteToken] = true
 				}
 				c.SeenTrs <- seenTrs
 
@@ -274,7 +275,7 @@ loop:
 
 				newPool := c.removeSeenTransactions(allTrs, seen)
 
-                // TODO: broadcast new pool to peers (share workload)
+				// TODO: broadcast new pool to peers (share workload)
 
 				c.TransactionPool <- newPool
 
@@ -298,12 +299,15 @@ func (c *Chain) validate(blocks *[]Block) (valid bool, seen map[string]bool) {
 
 		// validate the transactions in the block
 		for _, tr := range bl.Transactions {
-			if _, ok := seen[string(tr.Header.VoteToken[:])]; ok {
-				log.Println("Invalid chain - duplicated transactions:", string(tr.Header.VoteToken[:]))
+			if valid := c.ValidateSignature(&tr); !valid {
+				log.Println("Invalid chain - badly signed transaction:", tr.Header.VoteToken)
 				return false, seen
 			}
-			seen[string(tr.Header.VoteToken[:])] = true
-			// TODO: should also verify signatures once implemented
+			if _, ok := seen[tr.Header.VoteToken]; ok {
+				log.Println("Invalid chain - duplicated transactions:", tr.Header.VoteToken)
+				return false, seen
+			}
+			seen[tr.Header.VoteToken] = true
 		}
 
 		valid, hash := bl.validate(parent)

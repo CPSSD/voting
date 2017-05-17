@@ -101,7 +101,7 @@ func (b *Block) MerkleHash() (hash []byte) {
 func merkleHash(trs []Transaction) (hash [32]byte) {
 	l := len(trs)
 	if l == 1 {
-		return trs[0].Proof
+		return trs[0].Header.BallotHash
 	}
 	hl := merkleHash(trs[:l/2])
 	hr := merkleHash(trs[l/2:])
@@ -161,4 +161,9 @@ func extractTransactions(blocks *[]Block) *[]Transaction {
 		i += copy(trs[i:], bl.Transactions)
 	}
 	return &trs
+}
+
+func checkProof(prefix string, len int, hash [32]byte) bool {
+	s := hex.EncodeToString(hash[:])
+	return s[:len] == prefix
 }

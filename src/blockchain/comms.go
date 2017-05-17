@@ -36,8 +36,14 @@ func (c *Chain) ReceiveTransaction(t *Transaction, _ *struct{}) (err error) {
 	pool := <-c.TransactionPool
 	seen := <-c.SeenTrs
 
+	if valid := c.ValidateSignature(t); !valid {
+		log.Println("Received a new transaction with invalid signature")
+		c.SeenTrs <- seen
+		c.TransactionPool <- pool
+		return nil
+	}
 	// if the tr was seen in our chain, then don't add it
-	if _, ok := seen[string(t.Header.VoteToken[:])]; ok {
+	if _, ok := seen[t.Header.VoteToken]; ok {
 		c.SeenTrs <- seen
 		c.TransactionPool <- pool
 		return nil
@@ -207,6 +213,7 @@ func (c *Chain) PrintPool() {
 
 	pool := <-c.TransactionPool
 	c.TransactionPool <- pool
+
 	for _, tr := range pool {
 		fmt.Println(tr)
 	}

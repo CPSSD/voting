@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"github.com/CPSSD/voting/src/blockchain"
 	"log"
+	"math/big"
 	"os"
 	"sync"
 )
 
 var (
 	tokenMsg    string = "Please enter your unique token"
-	ballotMsg   string = "Please enter your ballot message"
+	voteMsg     string = "Please enter your ballot message"
 	badInputMsg string = "Unrecognised input"
 	waitMsg     string = "Waiting for processes to quit"
 )
@@ -89,17 +90,17 @@ loop:
 			stop <- true
 		case "v":
 			var tokenStr string
-			var ballotStr string
+			var vote int64
 
 			fmt.Printf("%s: ", tokenMsg)
 			fmt.Scanf("%v\n", &tokenStr)
-			fmt.Printf("%s: ", ballotMsg)
-			fmt.Scanf("%v\n", &ballotStr)
+			fmt.Printf("%s: ", voteMsg)
+			fmt.Scanf("%v\n", &vote)
 
-			token := []byte(tokenStr)
-			ballot := []byte(ballotStr)
+			token := tokenStr
+			ballot := big.NewInt(vote)
 
-			tr := blockchain.NewTransaction(token, ballot)
+			tr := c.NewTransaction(token, ballot)
 
 			go c.ReceiveTransaction(tr, nil)
 		default:
