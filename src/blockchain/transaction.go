@@ -30,8 +30,11 @@ func (t Transaction) String() (str string) {
 
 func (c *Chain) NewTransaction(token string, vote *big.Int) (t *Transaction) {
 
-	// TODO: encrypt the vote using the public election key here to form ballot
-	ballot := vote
+	ballot, err := c.conf.ElectionKey.Encrypt(vote)
+	if err != nil {
+		log.Println("Error while encrypting vote with the public election key")
+		log.Fatalln(err)
+	}
 
 	t = &Transaction{
 		Header: TransactionHeader{
