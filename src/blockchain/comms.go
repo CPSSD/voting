@@ -26,10 +26,14 @@ type Configuration struct {
 	MyToken    string
 
 	ElectionKey           crypto.PrivateKey
-	ElectionSecretLambda  crypto.Share
-	ElectionSecretMu      crypto.Share
+	ElectionKeyShare      ElectionSecret
 	ElectionLambdaModulus *big.Int
 	ElectionMuModulus     *big.Int
+}
+
+type ElectionSecret struct {
+	Lambda crypto.Share
+	Mu     crypto.Share
 }
 
 func (c *Chain) ReceiveTransaction(t *Transaction, _ *struct{}) (err error) {
@@ -71,6 +75,23 @@ func (c *Chain) ReceiveTransaction(t *Transaction, _ *struct{}) (err error) {
 type ChainUpdate struct {
 	Blocks []Block
 	//SeenTrs []string
+}
+
+func (c *Chain) sendKeyShareTo(peer string) {
+	conn, err := rpc.DialHTTP("tcp", peer)
+	if err != nil {
+		return
+	}
+	shareCall := conn.Go("Chain.ReceiveKeyShare", c.conf.ElectionKeyShare, nil, nil)
+	_ = <-shareCall.Done
+	conn.Close()
+}
+
+func (c *Chain) ReceiveKeyShare(share *crypto.Share, _ *struct{}) (err error) {
+
+	log.Println("Received a key share, writing to respective channel")
+	c.KeyShareUpdate <- *share
+	return
 }
 
 func (c *Chain) getChainUpdateFrom(peer string) (altChain *[]Block, err error) {

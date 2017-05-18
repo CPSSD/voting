@@ -1,6 +1,7 @@
 package blockchain
 
 import (
+	"github.com/CPSSD/voting/src/crypto"
 	"log"
 	"strconv"
 	"sync"
@@ -13,6 +14,7 @@ type Chain struct {
 	TransactionsReady   chan []Transaction
 	CurrentTransactions chan []Transaction
 	BlockUpdate         chan BlockUpdate
+	KeyShareUpdate      chan crypto.Share
 	SeenTrs             chan map[string]bool
 	head                *Block
 	blocks              chan []Block
@@ -26,6 +28,7 @@ func NewChain() (c *Chain, err error) {
 		TransactionsReady:   make(chan []Transaction, 1),
 		CurrentTransactions: make(chan []Transaction, 1),
 		BlockUpdate:         make(chan BlockUpdate, 1),
+		KeyShareUpdate:      make(chan crypto.Share, 1),
 		SeenTrs:             make(chan map[string]bool, 1),
 		head:                NewBlock(),
 		blocks:              make(chan []Block, 1),

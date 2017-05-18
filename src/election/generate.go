@@ -95,8 +95,11 @@ func main() {
 				Mu:        new(big.Int),
 				PublicKey: priv.PublicKey,
 			},
-			ElectionSecretLambda:  lambdaShares[i],
-			ElectionSecretMu:      muShares[i],
+
+			ElectionKeyShare: blockchain.ElectionSecret{
+				Lambda: lambdaShares[i],
+				Mu:     muShares[i],
+			},
 			ElectionLambdaModulus: lambdaPrimeModulus,
 			ElectionMuModulus:     muPrimeModulus,
 		}
