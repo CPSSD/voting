@@ -71,6 +71,7 @@ loop:
 			fmt.Printf("\tv\t\tCast a vote\n")
 			fmt.Printf("\tq\t\tQuit program\n")
 			fmt.Printf("\tb\t\tBroadcast share\n")
+			fmt.Printf("\tr\t\tReconstruct election key\n")
 		case "peers":
 			c.PrintPeers()
 		case "pool":
@@ -87,8 +88,12 @@ loop:
 			quit <- true
 			break loop
 		case "b":
-			fmt.Printf("Broadcasting our share of the election key")
+			fmt.Printf("Broadcasting our share of the election key\n")
 			c.BroadcastShare()
+		case "r":
+			fmt.Printf("Attempting to reconstruct the election key\n")
+			c.ReconstructElectionKey()
+			c.PrintKey()
 		case "v":
 			var tokenStr string
 			var vote int64

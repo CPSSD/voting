@@ -1,6 +1,7 @@
 package blockchain
 
 import (
+	"github.com/CPSSD/voting/src/crypto"
 	"log"
 	"strconv"
 	"sync"
@@ -13,8 +14,7 @@ type Chain struct {
 	TransactionsReady   chan []Transaction
 	CurrentTransactions chan []Transaction
 	BlockUpdate         chan BlockUpdate
-	KeyShareUpdate      chan ElectionSecret
-	KeyShares           chan map[ElectionSecret]bool
+	KeyShares           chan map[string]ElectionSecret
 	SeenTrs             chan map[string]bool
 	head                *Block
 	blocks              chan []Block
@@ -28,8 +28,7 @@ func NewChain() (c *Chain, err error) {
 		TransactionsReady:   make(chan []Transaction, 1),
 		CurrentTransactions: make(chan []Transaction, 1),
 		BlockUpdate:         make(chan BlockUpdate, 1),
-		KeyShareUpdate:      make(chan ElectionSecret, 1),
-		KeyShares:           make(chan map[ElectionSecret]bool, 1),
+		KeyShares:           make(chan map[string]ElectionSecret, 1),
 		SeenTrs:             make(chan map[string]bool, 1),
 		head:                NewBlock(),
 		blocks:              make(chan []Block, 1),
@@ -38,11 +37,41 @@ func NewChain() (c *Chain, err error) {
 	c.TransactionPool <- pool
 	seenTrs := make(map[string]bool, 0)
 	c.SeenTrs <- seenTrs
-	keyShares := make(map[ElectionSecret]bool, 0)
+	keyShares := make(map[string]ElectionSecret, 0)
 	c.KeyShares <- keyShares
 	blocks := make([]Block, 0)
 	c.blocks <- blocks
 	return c, nil
+}
+
+func (c *Chain) ReconstructElectionKey() {
+	shares := <-c.KeyShares
+	c.KeyShares <- shares
+
+	lambdaShares := make([]crypto.Share, len(shares))
+	muShares := make([]crypto.Share, len(shares))
+
+	var i int
+	for _, s := range shares {
+		lambdaShares[i] = s.Lambda
+		muShares[i] = s.Mu
+		i++
+	}
+
+	lambda, err := crypto.Interpolate(lambdaShares, c.conf.ElectionLambdaModulus)
+	if err != nil {
+		log.Println("Error reconstructing the lambda value for the election key")
+		log.Fatalln(err)
+	}
+
+	mu, err := crypto.Interpolate(muShares, c.conf.ElectionMuModulus)
+	if err != nil {
+		log.Println("Error reconstructing the mu value for the election key")
+		log.Fatalln(err)
+	}
+
+	c.conf.ElectionKey.Lambda = lambda
+	c.conf.ElectionKey.Mu = mu
 }
 
 func (c Chain) String() (str string) {
@@ -223,6 +252,7 @@ loop:
 			log.Println("About to broadcast key shares")
 			c.broadcastKeyShares()
 			timer = time.NewTimer(time.Second * time.Duration(delay))
+
 		}
 	}
 }

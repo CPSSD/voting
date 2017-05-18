@@ -36,6 +36,11 @@ type ElectionSecret struct {
 	Mu     crypto.Share
 }
 
+func (c *Chain) PrintKey() {
+	fmt.Println(c.conf.ElectionKey.Lambda)
+	fmt.Println(c.conf.ElectionKey.Mu)
+}
+
 func (c *Chain) ReceiveTransaction(t *Transaction, _ *struct{}) (err error) {
 	pool := <-c.TransactionPool
 	seen := <-c.SeenTrs
@@ -78,6 +83,7 @@ type ChainUpdate struct {
 }
 
 func (c *Chain) sendKeyShareTo(share *ElectionSecret, peer string) {
+	log.Println("Opening connection to ", peer)
 	conn, err := rpc.DialHTTP("tcp", peer)
 	if err != nil {
 		return
@@ -85,12 +91,14 @@ func (c *Chain) sendKeyShareTo(share *ElectionSecret, peer string) {
 	shareCall := conn.Go("Chain.ReceiveKeyShare", share, nil, nil)
 	_ = <-shareCall.Done
 	conn.Close()
+	log.Println("Done sending key, connection closed with", peer)
 }
 
 func (c *Chain) ReceiveKeyShare(share *ElectionSecret, _ *struct{}) (err error) {
 
 	log.Println("Received a key share, writing to respective channel")
-	c.KeyShareUpdate <- *share
+	c.addShare(*share)
+	log.Println("Written key share to channel")
 	return
 }
 
@@ -191,9 +199,19 @@ func (c *Chain) SendTransaction(tr *Transaction) {
 func (c *Chain) BroadcastShare() {
 
 	log.Println("Broadcasting our share of the election key")
+	c.addShare(c.conf.ElectionKeyShare)
+}
+
+func (c *Chain) addShare(sh ElectionSecret) (exists bool) {
+
 	shares := <-c.KeyShares
-	shares[c.conf.ElectionKeyShare] = true
+	var ok bool
+	if _, ok := shares[sh.Lambda.X.String()]; !ok {
+		shares[sh.Lambda.X.String()] = sh
+		log.Println("Added a new share:", sh.Lambda.X.String())
+	}
 	c.KeyShares <- shares
+	return ok
 }
 
 func (c *Chain) broadcastKeyShares() {
@@ -209,9 +227,12 @@ func (c *Chain) broadcastKeyShares() {
 	c.Peers <- peers
 
 	log.Println("Broadcasting our known shares")
-	for s, _ := range shares {
+	for _, s := range shares {
 		for p, _ := range peers {
-			c.sendKeyShareTo(&s, p)
+			if p != c.conf.MyAddr+c.conf.MyPort {
+				log.Println("Broadcasting share", s, "to peer:", p)
+				c.sendKeyShareTo(&s, p)
+			}
 		}
 	}
 }
