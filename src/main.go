@@ -51,7 +51,7 @@ func main() {
 
 	var syncDelay int = 10
 	var wg sync.WaitGroup
-	wg.Add(3)
+	wg.Add(4)
 	c.Start(syncDelay, quit, stop, start, confirm, &wg)
 	start <- true
 
@@ -70,7 +70,7 @@ loop:
 			fmt.Printf("\tsp\t\tSave current peer list\n")
 			fmt.Printf("\tv\t\tCast a vote\n")
 			fmt.Printf("\tq\t\tQuit program\n")
-			fmt.Printf("\tb\t\tBlock interrupt\n")
+			fmt.Printf("\tb\t\tBroadcast share\n")
 		case "peers":
 			c.PrintPeers()
 		case "pool":
@@ -87,7 +87,8 @@ loop:
 			quit <- true
 			break loop
 		case "b":
-			stop <- true
+			fmt.Printf("Broadcasting our share of the election key")
+			c.BroadcastShare()
 		case "v":
 			var tokenStr string
 			var vote int64

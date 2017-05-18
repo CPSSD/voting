@@ -1,7 +1,6 @@
 package blockchain
 
 import (
-	"github.com/CPSSD/voting/src/crypto"
 	"log"
 	"strconv"
 	"sync"
@@ -14,7 +13,8 @@ type Chain struct {
 	TransactionsReady   chan []Transaction
 	CurrentTransactions chan []Transaction
 	BlockUpdate         chan BlockUpdate
-	KeyShareUpdate      chan crypto.Share
+	KeyShareUpdate      chan ElectionSecret
+	KeyShares           chan map[ElectionSecret]bool
 	SeenTrs             chan map[string]bool
 	head                *Block
 	blocks              chan []Block
@@ -28,7 +28,8 @@ func NewChain() (c *Chain, err error) {
 		TransactionsReady:   make(chan []Transaction, 1),
 		CurrentTransactions: make(chan []Transaction, 1),
 		BlockUpdate:         make(chan BlockUpdate, 1),
-		KeyShareUpdate:      make(chan crypto.Share, 1),
+		KeyShareUpdate:      make(chan ElectionSecret, 1),
+		KeyShares:           make(chan map[ElectionSecret]bool, 1),
 		SeenTrs:             make(chan map[string]bool, 1),
 		head:                NewBlock(),
 		blocks:              make(chan []Block, 1),
@@ -37,6 +38,8 @@ func NewChain() (c *Chain, err error) {
 	c.TransactionPool <- pool
 	seenTrs := make(map[string]bool, 0)
 	c.SeenTrs <- seenTrs
+	keyShares := make(map[ElectionSecret]bool, 0)
+	c.KeyShares <- keyShares
 	blocks := make([]Block, 0)
 	c.blocks <- blocks
 	return c, nil
@@ -199,6 +202,29 @@ func (c *Chain) Start(delay int, quit, stop, start, confirm chan bool, w *sync.W
 	// be ready to process new blocks and consensus forming
 	log.Println("Starting chain management process...")
 	go c.scheduleChainUpdates(quit, stop, start, confirm, w)
+
+	// be listening for new shares
+	log.Println("Starting key share collection process...")
+	go c.scheduleKeyShareBroadcasting(delay, quit, w)
+}
+
+func (c *Chain) scheduleKeyShareBroadcasting(delay int, quit chan bool, wg *sync.WaitGroup) {
+	timer := time.NewTimer(time.Second * time.Duration(delay))
+loop:
+	for {
+		select {
+		case <-quit:
+			log.Println("Key share collection process received signal to shutdown")
+			quit <- true
+			wg.Done()
+			break loop
+
+		case <-timer.C:
+			log.Println("About to broadcast key shares")
+			c.broadcastKeyShares()
+			timer = time.NewTimer(time.Second * time.Duration(delay))
+		}
+	}
 }
 
 func (c *Chain) scheduleChainUpdates(quit, stopMining, startMining, confirmStopped chan bool, wg *sync.WaitGroup) {

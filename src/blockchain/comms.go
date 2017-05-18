@@ -77,17 +77,17 @@ type ChainUpdate struct {
 	//SeenTrs []string
 }
 
-func (c *Chain) sendKeyShareTo(peer string) {
+func (c *Chain) sendKeyShareTo(share *ElectionSecret, peer string) {
 	conn, err := rpc.DialHTTP("tcp", peer)
 	if err != nil {
 		return
 	}
-	shareCall := conn.Go("Chain.ReceiveKeyShare", c.conf.ElectionKeyShare, nil, nil)
+	shareCall := conn.Go("Chain.ReceiveKeyShare", share, nil, nil)
 	_ = <-shareCall.Done
 	conn.Close()
 }
 
-func (c *Chain) ReceiveKeyShare(share *crypto.Share, _ *struct{}) (err error) {
+func (c *Chain) ReceiveKeyShare(share *ElectionSecret, _ *struct{}) (err error) {
 
 	log.Println("Received a key share, writing to respective channel")
 	c.KeyShareUpdate <- *share
@@ -186,6 +186,34 @@ func (c *Chain) SendTransaction(tr *Transaction) {
 	c.Peers <- peers
 	log.Println("Done sending transaction to peers")
 	return
+}
+
+func (c *Chain) BroadcastShare() {
+
+	log.Println("Broadcasting our share of the election key")
+	shares := <-c.KeyShares
+	shares[c.conf.ElectionKeyShare] = true
+	c.KeyShares <- shares
+}
+
+func (c *Chain) broadcastKeyShares() {
+
+	shares := <-c.KeyShares
+	c.KeyShares <- shares
+
+	if len(shares) == 0 {
+		return
+	}
+
+	peers := <-c.Peers
+	c.Peers <- peers
+
+	log.Println("Broadcasting our known shares")
+	for s, _ := range shares {
+		for p, _ := range peers {
+			c.sendKeyShareTo(&s, p)
+		}
+	}
 }
 
 func (c *Chain) syncPeers() {
