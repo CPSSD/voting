@@ -1,7 +1,0 @@
-{
-    "MyAddr": "localhost",
-    "MyPort": ":8105",
-    "Peers": {
-        "localhost:8092": true
-    }
-}
