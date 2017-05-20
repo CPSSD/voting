@@ -55,6 +55,10 @@ func main() {
 	c.Start(syncDelay, quit, stop, start, confirm, &wg)
 	start <- true
 
+	fmt.Println("Welcome to voting system.")
+	vt := c.GetVoteToken()
+	fmt.Println("Your vote token is:", vt)
+
 loop:
 	for {
 		fmt.Printf("What next? (h for help): ")
@@ -72,6 +76,7 @@ loop:
 			fmt.Printf("\tq\t\tQuit program\n")
 			fmt.Printf("\tb\t\tBroadcast share\n")
 			fmt.Printf("\tr\t\tReconstruct election key\n")
+			fmt.Printf("\ttally\t\tTally the votes\n")
 		case "peers":
 			c.PrintPeers()
 		case "pool":
@@ -95,12 +100,8 @@ loop:
 			c.ReconstructElectionKey()
 			c.PrintKey()
 		case "v":
-			var tokenStr string
 
-			fmt.Printf("%s: ", tokenMsg)
-			fmt.Scanf("%v\n", &tokenStr)
-
-			token := tokenStr
+			token := vt
 
 			ballot := new(election.Ballot)
 			err := ballot.Fill(c.GetFormat(), tokenMsg)
@@ -110,6 +111,16 @@ loop:
 				tr := c.NewTransaction(token, ballot)
 				go c.ReceiveTransaction(tr, nil)
 			}
+		case "tally":
+			ballots := c.CollectBallots()
+			format := c.GetFormat()
+			key := c.GetElectionKey()
+			fmt.Println("Calculating the tally...")
+			tally, err := format.Tally(ballots, &key)
+			if err != nil {
+				fmt.Println("Error calculating tally")
+			}
+			fmt.Println(tally)
 		default:
 			fmt.Println(badInputMsg)
 		}

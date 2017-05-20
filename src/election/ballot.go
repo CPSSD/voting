@@ -93,6 +93,13 @@ type Tally struct {
 	Totals map[string]*big.Int
 }
 
+func (t Tally) String() (str string) {
+	for name, result := range t.Totals {
+		str = str + name + ": " + result.String() + " votes\n"
+	}
+	return "Totals for the election are as follows:\n" + str
+}
+
 func (f *Format) Tally(bs *[]Ballot, key *crypto.PrivateKey) (t *Tally, err error) {
 
 	t = &Tally{
@@ -117,21 +124,12 @@ func (f *Format) Tally(bs *[]Ballot, key *crypto.PrivateKey) (t *Tally, err erro
 	for name, count := range selectionCounts {
 		sum, err := key.AddCipherTexts(count...)
 		if err != nil {
-			fmt.Println("Error summing ciphertexts!!!")
-			panic(err)
+			return t, err
 		}
-
-		fmt.Println("One summed ciphertext, decrypting...")
-
 		result, err := key.Decrypt(sum)
 		if err != nil {
-			fmt.Println("Error decrypting a ciphertext!!!")
-			panic(err)
+			return t, err
 		}
-
-		fmt.Println("One ciphertext decrypted...")
-		fmt.Println(name, result.String())
-
 		t.Totals[name] = result
 	}
 

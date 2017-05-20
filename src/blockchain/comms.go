@@ -48,6 +48,31 @@ func (c *Chain) GetFormat() election.Format {
 	return c.conf.ElectionFormat
 }
 
+func (c *Chain) GetElectionKey() crypto.PrivateKey {
+	return c.conf.ElectionKey
+}
+
+func (c *Chain) GetVoteToken() string {
+	return c.conf.MyToken
+}
+
+func (c *Chain) CollectBallots() *[]election.Ballot {
+	log.Println("Gathering ballots from the chain")
+	blocks := <-c.blocks
+	c.blocks <- blocks
+
+	ballots := make([]election.Ballot, 0)
+
+	for _, bl := range blocks {
+		for _, tr := range bl.Transactions {
+			ballots = append(ballots, tr.Ballot)
+		}
+	}
+	log.Println("Collected the ballots from the chain")
+
+	return &ballots
+}
+
 func (c *Chain) ReceiveTransaction(t *Transaction, _ *struct{}) (err error) {
 	pool := <-c.TransactionPool
 	seen := <-c.SeenTrs

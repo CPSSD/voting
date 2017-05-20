@@ -65,7 +65,7 @@ func main() {
 	}
 
 	// create the shares of the election key's mu value
-	muShares, muPrimeModulus, err := crypto.DivideSecret(priv.Lambda, shareThreshold, numVoters)
+	muShares, muPrimeModulus, err := crypto.DivideSecret(priv.Mu, shareThreshold, numVoters)
 	if err != nil {
 		panic(err)
 	}
