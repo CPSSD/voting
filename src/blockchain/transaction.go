@@ -1,16 +1,18 @@
 package blockchain
 
 import (
+	"bytes"
 	"crypto/sha256"
+	"encoding/binary"
 	"github.com/CPSSD/voting/src/crypto"
+	"github.com/CPSSD/voting/src/election"
 	"log"
-	"math/big"
 	"time"
 )
 
 type Transaction struct {
 	Header TransactionHeader
-	Ballot *big.Int // the encrypted vote
+	Ballot election.Ballot // the encrypted vote
 }
 
 type TransactionHeader struct {
@@ -22,28 +24,36 @@ type TransactionHeader struct {
 
 func (t Transaction) String() (str string) {
 	// str = str + "\n // Time:          " + fmt.Sprint(t.Header.Timestamp)
-	str = str + "\n // Ballot:        " + t.Ballot.String()
+	// str = str + "\n // Ballot:        " + t.Ballot.String()
 	str = str + "\n // Vote Token:    " + string(t.Header.VoteToken)
 
 	return str
 }
 
-func (c *Chain) NewTransaction(token string, vote *big.Int) (t *Transaction) {
+func (c *Chain) NewTransaction(token string, ballot *election.Ballot) (t *Transaction) {
 
-	ballot, err := c.conf.ElectionKey.Encrypt(vote)
-	if err != nil {
-		log.Println("Error while encrypting vote with the public election key")
-		log.Fatalln(err)
+	tmp := ballot
+	for i, s := range ballot.Selections {
+		enc, err := c.conf.ElectionKey.Encrypt(s.Vote)
+		if err != nil {
+			log.Println("Error while encrypting vote with the public election key")
+			log.Fatalln(err)
+		}
+		tmp.Selections[i].Vote = enc
 	}
+	ballot = tmp
 
 	t = &Transaction{
 		Header: TransactionHeader{
 			VoteToken: token,
 		},
-		Ballot: ballot,
+		Ballot: *ballot,
 	}
 
-	t.Header.BallotHash = sha256.Sum256(t.Ballot.Bytes())
+	var ballot_buf bytes.Buffer
+	binary.Write(&ballot_buf, binary.BigEndian, t.Ballot)
+
+	t.Header.BallotHash = sha256.Sum256(ballot_buf.Bytes())
 	t.Header.Signature = *crypto.SignHash(&c.conf.PrivateKey, &t.Header.BallotHash)
 	t.Header.Timestamp = uint32(time.Now().Unix())
 

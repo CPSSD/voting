@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"github.com/CPSSD/voting/src/blockchain"
+	"github.com/CPSSD/voting/src/election"
 	"log"
-	"math/big"
 	"os"
 	"sync"
 )
@@ -96,19 +96,20 @@ loop:
 			c.PrintKey()
 		case "v":
 			var tokenStr string
-			var vote int64
 
 			fmt.Printf("%s: ", tokenMsg)
 			fmt.Scanf("%v\n", &tokenStr)
-			fmt.Printf("%s: ", voteMsg)
-			fmt.Scanf("%v\n", &vote)
 
 			token := tokenStr
-			ballot := big.NewInt(vote)
 
-			tr := c.NewTransaction(token, ballot)
-
-			go c.ReceiveTransaction(tr, nil)
+			ballot := new(election.Ballot)
+			err := ballot.Fill(c.GetFormat(), tokenMsg)
+			if err != nil {
+				log.Printf("Error filling out the ballot")
+			} else {
+				tr := c.NewTransaction(token, ballot)
+				go c.ReceiveTransaction(tr, nil)
+			}
 		default:
 			fmt.Println(badInputMsg)
 		}

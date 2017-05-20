@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/CPSSD/voting/src/blockchain"
 	"github.com/CPSSD/voting/src/crypto"
+	"github.com/CPSSD/voting/src/election"
 	"io/ioutil"
 	"math/big"
 	mrand "math/rand"
@@ -48,6 +49,9 @@ func main() {
 	fmt.Printf("Number of characters in a vote node: ")
 	fmt.Scanf("%v\n", &tokenLen)
 
+	format := election.CreateFormat()
+
+	fmt.Println("Building election config...")
 	// create the election key
 	priv, err := crypto.GenerateKeyPair(512)
 	if err != nil {
@@ -90,6 +94,8 @@ func main() {
 			PrivateKey: *privateKey,
 			MyToken:    vt,
 
+			ElectionFormat: *format,
+
 			ElectionKey: crypto.PrivateKey{
 				Lambda:    new(big.Int),
 				Mu:        new(big.Int),
@@ -122,6 +128,8 @@ func main() {
 			panic(err)
 		}
 	}
+
+	fmt.Println("Done")
 
 }
 

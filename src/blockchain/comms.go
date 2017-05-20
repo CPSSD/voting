@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/CPSSD/voting/src/crypto"
+	"github.com/CPSSD/voting/src/election"
 	"io/ioutil"
 	"log"
 	"math/big"
@@ -25,6 +26,8 @@ type Configuration struct {
 	VoteTokens map[string]dsa.PublicKey
 	MyToken    string
 
+	ElectionFormat election.Format
+
 	ElectionKey           crypto.PrivateKey
 	ElectionKeyShare      ElectionSecret
 	ElectionLambdaModulus *big.Int
@@ -39,6 +42,10 @@ type ElectionSecret struct {
 func (c *Chain) PrintKey() {
 	fmt.Println(c.conf.ElectionKey.Lambda)
 	fmt.Println(c.conf.ElectionKey.Mu)
+}
+
+func (c *Chain) GetFormat() election.Format {
+	return c.conf.ElectionFormat
 }
 
 func (c *Chain) ReceiveTransaction(t *Transaction, _ *struct{}) (err error) {
