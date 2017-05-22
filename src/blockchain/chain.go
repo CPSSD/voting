@@ -348,7 +348,7 @@ loop:
 
 				newPool := c.removeSeenTransactions(allTrs, seen)
 
-				// TODO: broadcast new pool to peers (share workload)
+                go c.broadcastOldTransactions(&newPool)
 
 				c.TransactionPool <- newPool
 
@@ -361,6 +361,16 @@ loop:
 			}
 		}
 	}
+}
+
+func (c *Chain) broadcastOldTransactions(trs *[]Transaction) {
+    log.Println("Broadcasting old transactions")
+
+    for _, tr := range *trs {
+        c.SendTransaction(&tr)
+    }
+
+    log.Println("Done broadcasting old transactions")
 }
 
 // validate will validate a set of blocks and their transactions.
