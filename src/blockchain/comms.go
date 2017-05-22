@@ -15,6 +15,10 @@ import (
 	"reflect"
 )
 
+// Configuration contains information about our node, along with
+// information about peers in the network, VoteTokens for the
+// election, and information required for reconstruction of the
+// election private key.
 type Configuration struct {
 	MyAddr    string
 	MyPort    string
@@ -34,28 +38,39 @@ type Configuration struct {
 	ElectionMuModulus     *big.Int
 }
 
+// ElectionSecret contains two shares which are required in the
+// reconstruction of the private election key.
 type ElectionSecret struct {
 	Lambda crypto.Share
 	Mu     crypto.Share
 }
 
+// PrintKey prints our current interpolation of the private
+// election key.
 func (c *Chain) PrintKey() {
 	fmt.Println(c.conf.ElectionKey.Lambda)
 	fmt.Println(c.conf.ElectionKey.Mu)
 }
 
+// GetFormat returns the format defined for the election.
 func (c *Chain) GetFormat() election.Format {
 	return c.conf.ElectionFormat
 }
 
+// GetElectionKey returns the election key as currently
+// interpolated by the node.
 func (c *Chain) GetElectionKey() crypto.PrivateKey {
 	return c.conf.ElectionKey
 }
 
+// GetVoteToken returns the vote token of the
+// user associated with this node.
 func (c *Chain) GetVoteToken() string {
 	return c.conf.MyToken
 }
 
+// CollectBallots will gather all the ballots from the current
+// chain and return them.
 func (c *Chain) CollectBallots() *[]election.Ballot {
 	log.Println("Gathering ballots from the chain")
 	blocks := <-c.blocks
@@ -73,6 +88,8 @@ func (c *Chain) CollectBallots() *[]election.Ballot {
 	return &ballots
 }
 
+// ReceiveTransaction is an RPC function which allows a node to
+// recieve transactions from the network.
 func (c *Chain) ReceiveTransaction(t *Transaction, _ *struct{}) (err error) {
 	pool := <-c.TransactionPool
 	seen := <-c.SeenTrs
@@ -109,9 +126,9 @@ func (c *Chain) ReceiveTransaction(t *Transaction, _ *struct{}) (err error) {
 	return nil
 }
 
+// ChainUpdate contains the blocks associated with a given chain.
 type ChainUpdate struct {
 	Blocks []Block
-	//SeenTrs []string
 }
 
 func (c *Chain) sendKeyShareTo(share *ElectionSecret, peer string) {
@@ -126,8 +143,9 @@ func (c *Chain) sendKeyShareTo(share *ElectionSecret, peer string) {
 	log.Println("Done sending key, connection closed with", peer)
 }
 
+// ReceiveKeyShare is an RPC function which allows a node to
+// receive a share of the private key from other nodes.
 func (c *Chain) ReceiveKeyShare(share *ElectionSecret, _ *struct{}) (err error) {
-
 	log.Println("Received a key share, writing to respective channel")
 	c.addShare(*share)
 	log.Println("Written key share to channel")
@@ -149,6 +167,9 @@ func (c *Chain) getChainUpdateFrom(peer string) (altChain *[]Block, err error) {
 	return altChain, err
 }
 
+// GetChain is an RPC call which will set the value of altChain
+// to the value of this node's current set of blocks. The value
+// of empty is unused.
 func (c *Chain) GetChain(empty bool, altChain *[]Block) error {
 	b := <-c.blocks
 	c.blocks <- b
@@ -157,12 +178,17 @@ func (c *Chain) GetChain(empty bool, altChain *[]Block) error {
 	return nil
 }
 
+// BlockUpdate contains the latest block, along with details of
+// the peer who created it and the length of the chain which it
+// was added to.
 type BlockUpdate struct {
 	LatestBlock Block
 	Peer        string
 	ChainLength uint32
 }
 
+// ReceiveBlockUpdate is an RPC function which allows a node
+// to receive an update about a block for further processing.
 func (c *Chain) ReceiveBlockUpdate(blu *BlockUpdate, _ *struct{}) (err error) {
 
 	log.Println("Received block update, writing to respective channel")
@@ -202,6 +228,8 @@ func (c *Chain) sendBlock(bl *Block) {
 	return
 }
 
+// SendTransaction will invoke the broadcasting of a
+// transaction to peers on the network.
 func (c *Chain) SendTransaction(tr *Transaction) {
 
 	log.Println("Sending transaction to peers")
@@ -228,6 +256,8 @@ func (c *Chain) SendTransaction(tr *Transaction) {
 	return
 }
 
+// BroadcastShare will add a user's share of the election
+// key to the pool of shares which are broadcast regularly.
 func (c *Chain) BroadcastShare() {
 
 	log.Println("Broadcasting our share of the election key")
@@ -300,6 +330,7 @@ func (c *Chain) syncPeers() {
 	return
 }
 
+// PrintPeers displays the list of peers known to a node
 func (c *Chain) PrintPeers() {
 
 	peers := <-c.Peers
@@ -311,6 +342,8 @@ func (c *Chain) PrintPeers() {
 	}
 }
 
+// PrintPool displays a list of transactions which are
+// not yet incorporated into the chain.
 func (c *Chain) PrintPool() {
 
 	pool := <-c.TransactionPool
@@ -321,6 +354,8 @@ func (c *Chain) PrintPool() {
 	}
 }
 
+// GetPeers is an RPC function which allows peers to
+// combine their peer lists for syncing.
 func (c *Chain) GetPeers(myPeers *map[string]bool, r *map[string]bool) error {
 
 	peers := <-c.Peers
@@ -334,24 +369,15 @@ func (c *Chain) GetPeers(myPeers *map[string]bool, r *map[string]bool) error {
 	return nil
 }
 
-func (c *Chain) SavePeers(filename string) {
-	log.Println("Saving peer list to disk")
-	bl := <-c.blocks
-	c.blocks <- bl
-	bytes, err := json.Marshal(bl)
-	err = ioutil.WriteFile(filename, bytes, 0777)
-	if err != nil {
-		log.Println("Could not save peer list to disk")
-		log.Println(err)
-	}
-}
-
 func (c *Chain) addPeer(p string) {
 	peers := <-c.Peers
 	peers[p] = true
 	c.Peers <- peers
 }
 
+// Init will read in a configration file and set up
+// a new chain. The RPC functions are made available
+// during the call of this method.
 func (c *Chain) Init(filename string) (err error) {
 
 	log.Println("Reading configuration file")

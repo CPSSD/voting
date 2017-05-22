@@ -12,23 +12,34 @@ var (
 	InvalidFormatError = errors.New("Invalid format was supplied; bad number of selections.")
 )
 
+// Ballot contains the structure of a ballot which a given
+// user will fill out. It contains the VoteToken of the
+// voter, along with the selections made by the voter.
 type Ballot struct {
 	VoteToken     string      // VT of the voter who owns ballot
 	NumSelections int         // number of selections in the ballot
 	Selections    []Selection // list of selections on the ballot
 }
 
+// Selection contains details on particular selection by
+// a user on a ballot, including its name and vote value.
 type Selection struct {
 	Name  string   // name of this selection option
 	Vote  *big.Int // value should be encrypted with PrivKE
 	Proof []byte   // value used as the zero-knowledge proof
 }
 
+// Format defines the format of a ballot, and should be used
+// to ensure that ballots follow the format defined for a
+// vote.
 type Format struct {
 	NumSelections int
 	Selections    []Selection
 }
 
+// Fill uses the defined Format f and the VoteToken vt and
+// takes a user through the prompts to fill out a ballot.
+// The ballot is returned in the value of b.
 func (b *Ballot) Fill(f Format, vt string) (err error) {
 	if len(f.Selections) != f.NumSelections {
 		return InvalidFormatError
@@ -59,6 +70,9 @@ func (b *Ballot) Fill(f Format, vt string) (err error) {
 	return nil
 }
 
+// CreateFormat allows for a defined Format to be created
+// for an election, and takes a user through defining the
+// selections available on a ballot.
 func CreateFormat() (f *Format) {
 	fmt.Printf("How many selections are on the ballot? ")
 	var input int
@@ -89,10 +103,13 @@ func CreateFormat() (f *Format) {
 	return f
 }
 
+// Tally represents a map of selection names to their
+// total counts.
 type Tally struct {
 	Totals map[string]*big.Int
 }
 
+// String representation of a Tally.
 func (t Tally) String() (str string) {
 	for name, result := range t.Totals {
 		str = str + name + ": " + result.String() + " votes\n"
@@ -100,6 +117,9 @@ func (t Tally) String() (str string) {
 	return "Totals for the election are as follows:\n" + str
 }
 
+// Tally creates a Tally of the Ballots in bs, according
+// to the Format in f. The final results are decrypted using
+// the PrivateKey provided.
 func (f *Format) Tally(bs *[]Ballot, key *crypto.PrivateKey) (t *Tally, err error) {
 
 	t = &Tally{

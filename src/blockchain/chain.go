@@ -8,6 +8,8 @@ import (
 	"time"
 )
 
+// Chain contains all of the information required for the system
+// to function.
 type Chain struct {
 	Peers               chan map[string]bool
 	TransactionPool     chan []Transaction
@@ -44,6 +46,8 @@ func NewChain() (c *Chain, err error) {
 	return c, nil
 }
 
+// ReconstructElectionKey will attempt to reconstruct the
+// election key from the shares currently available to a node.
 func (c *Chain) ReconstructElectionKey() {
 	shares := <-c.KeyShares
 	c.KeyShares <- shares
@@ -74,6 +78,7 @@ func (c *Chain) ReconstructElectionKey() {
 	c.conf.ElectionKey.Mu = mu
 }
 
+// String representation of a Chain.
 func (c Chain) String() (str string) {
 	blocks := <-c.blocks
 	c.blocks <- blocks
@@ -83,6 +88,8 @@ func (c Chain) String() (str string) {
 	return "Chain:\n " + str
 }
 
+// schedulePeerSync will regularly sync peer lists with its known
+// peers.
 func (c *Chain) schedulePeerSync(syncDelay int, quit chan bool, wg *sync.WaitGroup) {
 	timer := time.NewTimer(time.Second)
 loop:
@@ -117,6 +124,8 @@ func (c *Chain) removeSeenTransactions(trs []Transaction, seen map[string]bool) 
 	return out
 }
 
+// scheduleMining is responsible for the logic of creating new
+// blocks in the chain.
 func (c *Chain) scheduleMining(quit, stopMining, startMining, confirmStopped chan bool, wg *sync.WaitGroup) {
 	timer := time.NewTimer(time.Second)
 start:
@@ -217,7 +226,8 @@ loop:
 }
 
 // Start will begin some of the background routines required for the running
-// of the blockchain such as searching for new peers, and mining blocks.
+// of the blockchain such as searching for new peers, mining blocks, handling
+// chain updates, and listening for new key shares.
 func (c *Chain) Start(delay int, quit, stop, start, confirm chan bool, w *sync.WaitGroup) {
 
 	// check for new peers every "delay" seconds
@@ -237,6 +247,8 @@ func (c *Chain) Start(delay int, quit, stop, start, confirm chan bool, w *sync.W
 	go c.scheduleKeyShareBroadcasting(delay, quit, w)
 }
 
+// scheduleKeyShareBroadcasting will regularly broadcast the
+// list of currently known key shares to the network.
 func (c *Chain) scheduleKeyShareBroadcasting(delay int, quit chan bool, wg *sync.WaitGroup) {
 	timer := time.NewTimer(time.Second * time.Duration(delay))
 loop:
@@ -257,6 +269,8 @@ loop:
 	}
 }
 
+// scheduleChainUpdates will handle new block updates, and communicates
+// with the mining process to help manage when and what to mine.
 func (c *Chain) scheduleChainUpdates(quit, stopMining, startMining, confirmStopped chan bool, wg *sync.WaitGroup) {
 loop:
 	for {
@@ -349,6 +363,7 @@ loop:
 	}
 }
 
+// validate will validate a set of blocks and their transactions.
 func (c *Chain) validate(blocks *[]Block) (valid bool, seen map[string]bool) {
 
 	seen = make(map[string]bool, 0)

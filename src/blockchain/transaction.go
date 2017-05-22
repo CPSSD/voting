@@ -10,11 +10,17 @@ import (
 	"time"
 )
 
+// Transaction contains the user's Ballot along
+// with a TransactionHeader containing information
+// about the transaction.
 type Transaction struct {
 	Header TransactionHeader
 	Ballot election.Ballot // the encrypted vote
 }
 
+// TransactionHeader contains information required to
+// verify a transaction, such as the VoteToken, the
+// BallotHash and Signature.
 type TransactionHeader struct {
 	VoteToken  string           // so that we know what token is authorizing the vote
 	BallotHash [32]byte         // hash of the ballot to tie it to the header
@@ -22,6 +28,7 @@ type TransactionHeader struct {
 	Timestamp  uint32           // timestamp so we know when to count this vote for
 }
 
+// String representation of a Transaction
 func (t Transaction) String() (str string) {
 	// str = str + "\n // Time:          " + fmt.Sprint(t.Header.Timestamp)
 	// str = str + "\n // Ballot:        " + t.Ballot.String()
@@ -30,6 +37,8 @@ func (t Transaction) String() (str string) {
 	return str
 }
 
+// NewTransaction will take a filled ballot and encrypt
+// its contents with the election key.
 func (c *Chain) NewTransaction(token string, ballot *election.Ballot) (t *Transaction) {
 
 	tmp := ballot
@@ -60,6 +69,9 @@ func (c *Chain) NewTransaction(token string, ballot *election.Ballot) (t *Transa
 	return t
 }
 
+// ValidateSignature will allow a signature of a transaction
+// to be validated. The result is returned in the boolean value
+// valid.
 func (c *Chain) ValidateSignature(t *Transaction) (valid bool) {
 	pubkey, ok := c.conf.VoteTokens[t.Header.VoteToken]
 	if !ok {

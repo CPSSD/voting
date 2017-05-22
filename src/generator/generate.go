@@ -1,3 +1,10 @@
+// Generate is used to create a set of user configs for the
+// system, along with the public and private key of the
+// election. The private key is shared amongst the nodes.
+// This program will also create DSA keys for users. The
+// completed configuration files will be named json files
+// in the range 0 to N-1, where N is the number of users to
+// generate.
 package main
 
 import (
@@ -13,6 +20,7 @@ import (
 	mrand "math/rand"
 	"strconv"
 )
+
 
 func main() {
 	var numVoters int      // how many "registered" voterList are there

@@ -71,7 +71,6 @@ loop:
 			fmt.Printf("\tpeers\t\tPrint known peers\n")
 			fmt.Printf("\tpool\t\tPrint pool of transactions\n")
 			fmt.Printf("\tchain\t\tPrint current chain\n")
-			fmt.Printf("\tsp\t\tSave current peer list\n")
 			fmt.Printf("\tv\t\tCast a vote\n")
 			fmt.Printf("\tq\t\tQuit program\n")
 			fmt.Printf("\tb\t\tBroadcast share\n")
@@ -85,10 +84,6 @@ loop:
 			fmt.Println("Entering print chain")
 			fmt.Println(c)
 			fmt.Println("Exited print chain")
-		case "sp":
-			fmt.Printf("\tEnter file name to save to: ")
-			fmt.Scanf("%v\n", &input)
-			c.SavePeers(input)
 		case "q":
 			quit <- true
 			break loop
