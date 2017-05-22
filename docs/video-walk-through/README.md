@@ -1,7 +1,4 @@
-
-<!--
-The video walk through is [here](FIX-ME).
--->
+The video walk through is [here](https://drive.google.com/open?id=0B4qC9QjXvPjdYk5PVXZBWnZ2RmM).
 
 Instructions:
 
